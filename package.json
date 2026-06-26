@@ -1,10 +1,14 @@
 {
   "name": "recovery-app-root",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.86"
   }
 }
