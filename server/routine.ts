@@ -34,7 +34,7 @@ export const RecoveryPlanSchema = z.object({
 
 export type RecoveryPlan = z.infer<typeof RecoveryPlanSchema>;
 
-async function getRoutine(input: string) {
+/*async function getRoutine(input: string) {
   const result = await generateText({
     model: anthropic('claude-sonnet-4-6'),
     output: Output.object({
@@ -46,6 +46,34 @@ async function getRoutine(input: string) {
   });
 
   return result;
+}*/
+
+async function getRoutine(input: string) {
+  const result = await generateText({
+    model: anthropic('claude-sonnet-4-6'),
+    prompt: `Generate a recovery plan for: "${input}". 
+             Ensure the output is valid JSON strictly following this schema: ${JSON.stringify(RecoveryPlanSchema.shape)}`,
+  });
+
+  // 1. Manually parse the text response
+  try {
+    const rawObject = JSON.parse(result.text);
+
+    // 2. Run safeParse on the raw object
+    const validationResult = RecoveryPlanSchema.safeParse(rawObject);
+
+    if (!validationResult.success) {
+      console.error("Validation failed! Details:", validationResult.error.format());
+      throw new Error("AI output did not match the required schema.");
+    }
+
+    // 3. Return the validated, typed object
+    return validationResult.data;
+
+  } catch (e) {
+    console.error("Failed to parse or validate JSON:", e);
+    throw e;
+  }
 }
 
 const input = process.argv[2] ?? 'I feel tired and need a gentle recovery routine.';
