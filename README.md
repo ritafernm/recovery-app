@@ -33,3 +33,11 @@ git clone https://github.com/ritafernm/recovery-app.git
 
 # Install dependencies
 npm install
+```
+
+### Environment Variables
+Copy [.env.example](.env.example) to `.env` and fill in the required values before starting the app.
+
+Required variables include:
+- `PORT`
+- `ANTHROPIC_API_KEY`
