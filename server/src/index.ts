@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const rateLimitMap = new Map<string, number>();
 
 // Request body validation for the recovery endpoint
 const recoveryRequestSchema = z.object({
@@ -27,7 +28,36 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Recovery Plan Generation Endpoint
-app.post('/recovery', (req: Request, res: Response) => {
+app.post('/recovery-plan', (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization;
+  const expectedToken = process.env.API_TOKEN;
+
+  if (!authHeader) {
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'A valid bearer token is required.',
+    });
+  }
+
+  if (!expectedToken || authHeader !== `Bearer ${expectedToken}`) {
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'The provided token is not allowed.',
+    });
+  }
+
+  const clientKey = req.ip || req.socket.remoteAddress || 'unknown';
+  const currentRequests = rateLimitMap.get(clientKey) || 0;
+
+  if (currentRequests >= 5) {
+    return res.status(429).json({
+      error: 'Too Many Requests',
+      message: 'Rate limit exceeded. Please try again later.',
+    });
+  }
+
+  rateLimitMap.set(clientKey, currentRequests + 1);
+
   const validation = recoveryRequestSchema.safeParse(req.body);
 
   if (!validation.success) {
@@ -39,8 +69,8 @@ app.post('/recovery', (req: Request, res: Response) => {
 
   const { input } = validation.data;
 
-  return res.status(200).json({
-    message: 'recovery request received',
+  return res.status(201).json({
+    message: 'New recovery plan created successfully!',
     input,
   });
 });
