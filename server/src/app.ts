@@ -7,7 +7,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import crypto from 'crypto';
 import { generateRecoveryPlan, saveRecoveryPlan } from './recovery-plan.js';
-import { markLogDone, getUserLogs } from './recovery-plan-logs.js';
+import { createLog, markLogDone, getUserLogs } from './recovery-plan-logs.js';
 
 function loadServerEnv() {
   const envFilePath = resolve(dirname(fileURLToPath(import.meta.url)), '.env');
@@ -24,6 +24,7 @@ const PORT = Number(process.env.PORT || 5000);
 
 const recoveryRequestSchema = z.object({
   input: z.string().trim().min(1, 'Input is required'),
+  userId: z.uuid('userId must be a valid UUID').optional(),
 });
 
 export function createApp() {
@@ -104,17 +105,19 @@ export function createApp() {
       });
     }
 
-    const { input } = validation.data;
+    const { input, userId } = validation.data;
 
     try {
       const plan = await generateRecoveryPlan(input);
       const savedPlan = await saveRecoveryPlan(plan);
+      const savedLog = await createLog(savedPlan.id, userId);
 
       return res.status(201).json({
         message: 'New recovery plan created successfully!',
         input,
         plan,
         savedPlanId: savedPlan.id,
+        logId: savedLog.id,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to create recovery plan.';

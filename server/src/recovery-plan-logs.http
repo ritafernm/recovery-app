@@ -3,7 +3,7 @@ GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs?userId={{$dotenv USER_UUID}}
 Authorization: Bearer {{$dotenv API_TOKEN}}
 
 ### Mark a log as complete
-PATCH {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs{{$dotenv USER_UUID}}/done
+PATCH {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs/{{$dotenv LOG_ID}}/done
 Authorization: Bearer {{$dotenv API_TOKEN}}
 
 ### Missing token (should return 401)

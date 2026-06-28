@@ -1,9 +1,10 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockGenerateRecoveryPlan, mockSaveRecoveryPlan } = vi.hoisted(() => ({
+const { mockGenerateRecoveryPlan, mockSaveRecoveryPlan, mockCreateLog } = vi.hoisted(() => ({
   mockGenerateRecoveryPlan: vi.fn(),
   mockSaveRecoveryPlan: vi.fn(),
+  mockCreateLog: vi.fn(),
 }));
 
 vi.mock('../src/recovery-plan.js', () => ({
@@ -11,7 +12,9 @@ vi.mock('../src/recovery-plan.js', () => ({
   saveRecoveryPlan: mockSaveRecoveryPlan,
 }));
 
-vi.mock('../src/recovery-plan-logs.js', () => ({}));
+vi.mock('../src/recovery-plan-logs.js', () => ({
+  createLog: mockCreateLog,
+}));
 
 import { createApp } from '../src/app.js';
 
@@ -39,8 +42,10 @@ describe('POST /recovery-plan', () => {
     process.env.API_TOKEN = 'test-token';
     mockGenerateRecoveryPlan.mockReset();
     mockSaveRecoveryPlan.mockReset();
+    mockCreateLog.mockReset();
     mockGenerateRecoveryPlan.mockResolvedValue(defaultPlan);
     mockSaveRecoveryPlan.mockResolvedValue({ id: 'plan-123' });
+    mockCreateLog.mockResolvedValue({ id: 'log-456' });
     app = createApp();
   });
 
@@ -91,6 +96,7 @@ describe('POST /recovery-plan', () => {
 
     mockGenerateRecoveryPlan.mockResolvedValueOnce(plan);
     mockSaveRecoveryPlan.mockResolvedValueOnce({ id: 'plan-123' });
+    mockCreateLog.mockResolvedValueOnce({ id: 'log-456' });
 
     const response = await request(app)
       .post('/recovery-plan')
@@ -99,12 +105,14 @@ describe('POST /recovery-plan', () => {
 
     expect(mockGenerateRecoveryPlan).toHaveBeenCalledWith('Rest and hydrate');
     expect(mockSaveRecoveryPlan).toHaveBeenCalledWith(plan);
+    expect(mockCreateLog).toHaveBeenCalledWith('plan-123', undefined);
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
       message: 'New recovery plan created successfully!',
       input: 'Rest and hydrate',
       plan,
       savedPlanId: 'plan-123',
+      logId: 'log-456',
     });
   });
 
