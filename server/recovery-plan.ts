@@ -53,17 +53,26 @@ function classifyAIError(error: unknown): RecoveryPlanAIError {
 }
 
 async function getRecoveryPlan(input: string) {
-  try {
-    const result = await generateText({
-      model: anthropic('claude-sonnet-4-6'),
-      output: Output.object({
-        schema: RecoveryPlanSchema,
-      }),
-      prompt: `Generate a recovery plan for: "${input}". 
-               Ensure the output strictly follows the schema structure for name, 
-               estimatedMinutes, and the tasks array.`,
-    });
+  const timeoutMs = Number(process.env.AI_TIMEOUT_MS || 30000);
 
+  const aiOperation = generateText({
+    model: anthropic('claude-sonnet-4-6'),
+    output: Output.object({
+      schema: RecoveryPlanSchema,
+    }),
+    prompt: `Generate a recovery plan for: "${input}". 
+             Ensure the output strictly follows the schema structure for name, 
+             estimatedMinutes, and the tasks array.`,
+  });
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error('AI request timed out'));
+    }, timeoutMs);
+  });
+
+  try {
+    const result = await Promise.race([aiOperation, timeoutPromise]);
     return result;
   } catch (error) {
     throw classifyAIError(error);
