@@ -34,45 +34,39 @@ export const RecoveryPlanSchema = z.object({
 
 export type RecoveryPlan = z.infer<typeof RecoveryPlanSchema>;
 
-/*async function getRoutine(input: string) {
-  const result = await generateText({
-    model: anthropic('claude-sonnet-4-6'),
-    output: Output.object({
-      schema: RecoveryPlanSchema,
-    }),
-    prompt: `Generate a recovery plan for: "${input}". 
-             Ensure the output strictly follows the schema structure for name, 
-             estimatedMinutes, and the tasks array.`,
-  });
+class RoutineAIError extends Error {
+  constructor(public statusCode: 502 | 504, message: string) {
+    super(message);
+    this.name = 'RoutineAIError';
+  }
+}
 
-  return result;
-}*/
+function classifyAIError(error: unknown): RoutineAIError {
+  const message = error instanceof Error ? error.message : String(error);
+  const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes('timeout') || normalizedMessage.includes('timed out')) {
+    return new RoutineAIError(504, 'The AI service timed out while generating the routine.');
+  }
+
+  return new RoutineAIError(502, `The AI service failed: ${message}`);
+}
 
 async function getRoutine(input: string) {
-  const result = await generateText({
-    model: anthropic('claude-sonnet-4-6'),
-    prompt: `Generate a recovery plan for: "${input}". 
-             Ensure the output is valid JSON strictly following this schema: ${JSON.stringify(RecoveryPlanSchema.shape)}`,
-  });
-
-  // 1. Manually parse the text response
   try {
-    const rawObject = JSON.parse(result.text);
+    const result = await generateText({
+      model: anthropic('claude-sonnet-4-6'),
+      output: Output.object({
+        schema: RecoveryPlanSchema,
+      }),
+      prompt: `Generate a recovery plan for: "${input}". 
+               Ensure the output strictly follows the schema structure for name, 
+               estimatedMinutes, and the tasks array.`,
+    });
 
-    // 2. Run safeParse on the raw object
-    const validationResult = RecoveryPlanSchema.safeParse(rawObject);
-
-    if (!validationResult.success) {
-      console.error("Validation failed! Details:", validationResult.error.format());
-      throw new Error("AI output did not match the required schema.");
-    }
-
-    // 3. Return the validated, typed object
-    return validationResult.data;
-
-  } catch (e) {
-    console.error("Failed to parse or validate JSON:", e);
-    throw e;
+    return result;
+  } catch (error) {
+    throw classifyAIError(error);
   }
 }
 
@@ -83,5 +77,15 @@ getRoutine(input)
     console.log(JSON.stringify(result, null, 2));
   })
   .catch((error) => {
+    if (error instanceof RoutineAIError) {
+      console.error(JSON.stringify({
+        error: error.message,
+        statusCode: error.statusCode,
+      }, null, 2));
+      process.exitCode = error.statusCode;
+      return;
+    }
+
     console.error('Error generating routine:', error);
+    process.exitCode = 502;
   });
