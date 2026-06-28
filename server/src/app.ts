@@ -8,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import crypto from 'crypto';
 import { generateRecoveryPlan } from './recovery-plan.js';
 import { saveRecoveryPlan } from './recovery-plan-store.js';
+import { markLogDone, getUserLogs } from './recovery-plan-logs.js';
 
 function loadServerEnv() {
   const envFilePath = resolve(dirname(fileURLToPath(import.meta.url)), '.env');
@@ -59,7 +60,7 @@ export function createApp() {
 
   app.use(cors({
     origin: corsOrigin,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true,
   }));
   app.use(express.json());
@@ -123,6 +124,80 @@ export function createApp() {
         error: 'Recovery plan generation failed',
         message,
       });
+    }
+  });
+
+  const uuidSchema = z.uuid('Invalid UUID format');
+  const userIdQuerySchema = z.object({
+    userId: z.uuid('Invalid userId UUID format'),
+  });
+
+  app.patch('/logs/:id/done', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    const expectedToken = process.env.API_TOKEN || process.env.TOKEN;
+
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'A valid bearer token is required.' });
+    }
+
+    const providedHeader = Buffer.from(authHeader);
+    const expectedHeader = Buffer.from(`Bearer ${expectedToken ?? ''}`);
+    const maxLength = Math.max(providedHeader.length, expectedHeader.length);
+    const paddedProvided = Buffer.alloc(maxLength, 0);
+    const paddedExpected = Buffer.alloc(maxLength, 0);
+    providedHeader.copy(paddedProvided);
+    expectedHeader.copy(paddedExpected);
+
+    if (!expectedToken || !crypto.timingSafeEqual(paddedProvided, paddedExpected)) {
+      return res.status(403).json({ error: 'Forbidden', message: 'The provided token is not allowed.' });
+    }
+
+    const idValidation = uuidSchema.safeParse(req.params.id);
+    if (!idValidation.success) {
+      return res.status(400).json({ error: 'Invalid log id', details: idValidation.error.flatten() });
+    }
+
+    try {
+      const updated = await markLogDone(idValidation.data);
+      return res.json({ message: 'Log marked as done.', log: updated });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update log.';
+      const status = message.includes('not found') ? 404 : 502;
+      return res.status(status).json({ error: 'Update failed', message });
+    }
+  });
+
+  app.get('/logs', async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    const expectedToken = process.env.API_TOKEN || process.env.TOKEN;
+
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'A valid bearer token is required.' });
+    }
+
+    const providedHeader = Buffer.from(authHeader);
+    const expectedHeader = Buffer.from(`Bearer ${expectedToken ?? ''}`);
+    const maxLength = Math.max(providedHeader.length, expectedHeader.length);
+    const paddedProvided = Buffer.alloc(maxLength, 0);
+    const paddedExpected = Buffer.alloc(maxLength, 0);
+    providedHeader.copy(paddedProvided);
+    expectedHeader.copy(paddedExpected);
+
+    if (!expectedToken || !crypto.timingSafeEqual(paddedProvided, paddedExpected)) {
+      return res.status(403).json({ error: 'Forbidden', message: 'The provided token is not allowed.' });
+    }
+
+    const queryValidation = userIdQuerySchema.safeParse(req.query);
+    if (!queryValidation.success) {
+      return res.status(400).json({ error: 'Invalid query parameters', details: queryValidation.error.flatten() });
+    }
+
+    try {
+      const logs = await getUserLogs(queryValidation.data.userId);
+      return res.json({ logs });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch logs.';
+      return res.status(502).json({ error: 'Fetch failed', message });
     }
   });
 

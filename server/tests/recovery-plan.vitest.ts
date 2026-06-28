@@ -14,6 +14,8 @@ vi.mock('../src/recovery-plan-store.js', () => ({
   saveRecoveryPlan: mockSaveRecoveryPlan,
 }));
 
+vi.mock('../src/recovery-plan-logs.js', () => ({}));
+
 import { createApp } from '../src/app.js';
 
 const defaultPlan = {
