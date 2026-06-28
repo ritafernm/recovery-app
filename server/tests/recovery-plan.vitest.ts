@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/app.js';
 
 describe('POST /recovery-plan', () => {
@@ -88,5 +88,40 @@ describe('POST /recovery-plan', () => {
       error: 'Too Many Requests',
       message: 'Rate limit exceeded. Please try again later.',
     });
+  });
+
+  it('allows requests again after the rate limit window expires', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const auth = 'Bearer test-token';
+
+      for (let index = 0; index < 5; index += 1) {
+        const response = await request(app)
+          .post('/recovery-plan')
+          .set('Authorization', auth)
+          .send({ input: 'Rest and hydrate' });
+
+        expect(response.status).toBe(201);
+      }
+
+      const blockedResponse = await request(app)
+        .post('/recovery-plan')
+        .set('Authorization', auth)
+        .send({ input: 'Rest and hydrate' });
+
+      expect(blockedResponse.status).toBe(429);
+
+      vi.advanceTimersByTime(15 * 60 * 1000);
+
+      const allowedResponse = await request(app)
+        .post('/recovery-plan')
+        .set('Authorization', auth)
+        .send({ input: 'Rest and hydrate' });
+
+      expect(allowedResponse.status).toBe(201);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

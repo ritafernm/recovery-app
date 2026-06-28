@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { pathToFileURL } from 'node:url';
 import crypto from 'crypto';
@@ -14,7 +15,20 @@ const recoveryRequestSchema = z.object({
 
 export function createApp() {
   const app = express();
-  const rateLimitMap = new Map<string, number>();
+  const recoveryPlanLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
+    handler: (_req: Request, res: Response) => {
+      res.status(429).json({
+        error: 'Too Many Requests',
+        message: 'Rate limit exceeded. Please try again later.',
+      });
+    },
+    skipFailedRequests: true,
+  });
 
   app.use(cors({
     origin: true,
@@ -27,7 +41,7 @@ export function createApp() {
     res.json({ ok: true });
   });
 
-  app.post('/recovery-plan', (req: Request, res: Response) => {
+  app.post('/recovery-plan', recoveryPlanLimiter, (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
     const expectedToken = process.env.API_TOKEN || process.env.TOKEN;
 
@@ -38,20 +52,19 @@ export function createApp() {
       });
     }
 
-    if (!expectedToken || !crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(`Bearer ${expectedToken}`))) {
+    const providedHeader = Buffer.from(authHeader);
+    const expectedHeader = Buffer.from(`Bearer ${expectedToken ?? ''}`);
+    const maxLength = Math.max(providedHeader.length, expectedHeader.length);
+    const paddedProvidedHeader = Buffer.alloc(maxLength, 0);
+    const paddedExpectedHeader = Buffer.alloc(maxLength, 0);
+
+    providedHeader.copy(paddedProvidedHeader);
+    expectedHeader.copy(paddedExpectedHeader);
+
+    if (!expectedToken || !crypto.timingSafeEqual(paddedProvidedHeader, paddedExpectedHeader)) {
       return res.status(403).json({
         error: 'Forbidden',
         message: 'The provided token is not allowed.',
-      });
-    }
-
-    const clientKey = req.ip || req.socket.remoteAddress || 'unknown';
-    const currentRequests = rateLimitMap.get(clientKey) || 0;
-
-    if (currentRequests >= 5) {
-      return res.status(429).json({
-        error: 'Too Many Requests',
-        message: 'Rate limit exceeded. Please try again later.',
       });
     }
 
@@ -63,8 +76,6 @@ export function createApp() {
         details: validation.error.flatten(),
       });
     }
-
-    rateLimitMap.set(clientKey, currentRequests + 1);
 
     const { input } = validation.data;
 
