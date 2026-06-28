@@ -1,0 +1,25 @@
+### Recover plan request
+POST http://127.0.0.1:5000/recovery-plan
+Content-Type: application/json
+Authorization: Bearer demo-token
+
+{
+  "input": "I need help with recovery planning"
+}
+
+### Missing token
+POST http://127.0.0.1:5000/recovery-plan
+Content-Type: application/json
+
+{
+  "input": "This should fail without a token"
+}
+
+### Invalid token
+POST http://127.0.0.1:5000/recovery-plan
+Content-Type: application/json
+Authorization: Bearer wrong-token
+
+{
+  "input": "This should fail with a bad token"
+}
