@@ -1,7 +1,7 @@
 ### Recover plan request
 POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/recovery-plan
 Content-Type: application/json
-Authorization: Bearer demo-token
+Authorization: Bearer {{$dotenv API_TOKEN}}
 
 {
   "input": "I need help with recovery planning"

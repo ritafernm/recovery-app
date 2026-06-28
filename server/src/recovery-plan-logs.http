@@ -1,0 +1,22 @@
+### Get logs for a user
+GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs?userId={{$dotenv USER_UUID}}
+Authorization: Bearer {{$dotenv API_TOKEN}}
+
+### Mark a log as complete
+PATCH {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs{{$dotenv USER_UUID}}/done
+Authorization: Bearer {{$dotenv API_TOKEN}}
+
+### Missing token (should return 401)
+GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs?userId=<paste-user-uuid-here>
+
+### Invalid token (should return 403)
+GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs?userId=<paste-user-uuid-here>
+Authorization: Bearer wrong-token
+
+### Invalid userId — not a UUID (should return 400)
+GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs?userId=not-a-uuid
+Authorization: Bearer {{$dotenv API_TOKEN}}
+
+### Invalid log id — not a UUID (should return 400)
+PATCH {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs/not-a-uuid/done
+Authorization: Bearer {{$dotenv API_TOKEN}}
