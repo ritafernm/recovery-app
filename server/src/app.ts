@@ -5,6 +5,8 @@ import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { pathToFileURL } from 'node:url';
 import crypto from 'crypto';
+import { generateRecoveryPlan } from './recovery-plan.js';
+import { saveRecoveryPlan } from './recovery-plan-store.js';
 
 const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Number(process.env.PORT || 5000);
@@ -55,7 +57,7 @@ export function createApp() {
     res.json({ ok: true });
   });
 
-  app.post('/recovery-plan', recoveryPlanLimiter, (req: Request, res: Response) => {
+  app.post('/recovery-plan', recoveryPlanLimiter, async (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
     const expectedToken = process.env.API_TOKEN || process.env.TOKEN;
 
@@ -93,11 +95,25 @@ export function createApp() {
 
     const { input } = validation.data;
 
+    try {
+      const plan = await generateRecoveryPlan(input);
+      const savedPlan = await saveRecoveryPlan(plan);
+
       return res.status(201).json({
         message: 'New recovery plan created successfully!',
         input,
-              });
+        plan,
+        savedPlanId: savedPlan.id,
       });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to create recovery plan.';
+
+      return res.status(502).json({
+        error: 'Recovery plan generation failed',
+        message,
+      });
+    }
+  });
 
   return app;
 }

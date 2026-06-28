@@ -43,3 +43,5 @@ Required variables include:
 - `NODE_ENV`
 - `CORS_ORIGIN`
 - `ANTHROPIC_API_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`

@@ -1,16 +1,22 @@
 import { generateText, Output } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
+import { pathToFileURL } from 'node:url';
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
+let anthropicClient: ReturnType<typeof createAnthropic> | null = null;
 
-if (!apiKey) {
-  throw new Error("ANTHROPIC_API_KEY is not defined in the environment.");
+function getAnthropicClient() {
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY is not defined in the environment.');
+  }
+
+  if (!anthropicClient) {
+    anthropicClient = createAnthropic({ apiKey });
+  }
+
+  return anthropicClient;
 }
-
-const anthropic = createAnthropic({
-  apiKey: apiKey,
-});
 
 // My Zod schema for the recovery plan
 export const RecoveryPlanSchema = z.object({
@@ -50,16 +56,16 @@ function classifyAIError(error: unknown): RecoveryPlanAIError {
   return new RecoveryPlanAIError(502, `The AI service failed: ${message}`);
 }
 
-async function getRecoveryPlan(input: string) {
+export async function generateRecoveryPlan(input: string): Promise<RecoveryPlan> {
   const timeoutMs = Number(process.env.AI_TIMEOUT_MS || 30000);
 
   const aiOperation = generateText({
-    model: anthropic('claude-sonnet-4-6'),
+    model: getAnthropicClient()('claude-sonnet-4-6'),
     output: Output.object({
       schema: RecoveryPlanSchema,
     }),
-    prompt: `Generate a recovery plan for: "${input}". 
-             Ensure the output strictly follows the schema structure for name, 
+    prompt: `Generate a recovery plan for: "${input}".
+             Ensure the output strictly follows the schema structure for name,
              estimatedMinutes, and the tasks array.`,
   });
 
@@ -71,28 +77,32 @@ async function getRecoveryPlan(input: string) {
 
   try {
     const result = await Promise.race([aiOperation, timeoutPromise]);
-    return result;
+    return result.output;
   } catch (error) {
     throw classifyAIError(error);
   }
 }
 
-const input = process.argv[2] ?? 'I feel tired and need a gentle recovery plan.';
+const isMainModule = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-getRecoveryPlan(input)
-  .then((result) => {
-    console.log(JSON.stringify(result, null, 2));
-  })
-  .catch((error) => {
-    if (error instanceof RecoveryPlanAIError) {
-      console.error(JSON.stringify({
-        error: error.message,
-        statusCode: error.statusCode,
-      }, null, 2));
-      process.exitCode = error.statusCode;
-      return;
-    }
+if (isMainModule) {
+  const input = process.argv[2] ?? 'I feel tired and need a gentle recovery plan.';
 
-    console.error('Error generating recovery plan:', error);
-    process.exitCode = 502;
-  });
+  generateRecoveryPlan(input)
+    .then((result) => {
+      console.log(JSON.stringify(result, null, 2));
+    })
+    .catch((error) => {
+      if (error instanceof RecoveryPlanAIError) {
+        console.error(JSON.stringify({
+          error: error.message,
+          statusCode: error.statusCode,
+        }, null, 2));
+        process.exitCode = error.statusCode;
+        return;
+      }
+
+      console.error('Error generating recovery plan:', error);
+      process.exitCode = 502;
+    });
+}

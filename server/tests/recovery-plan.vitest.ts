@@ -1,6 +1,36 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { mockGenerateRecoveryPlan, mockSaveRecoveryPlan } = vi.hoisted(() => ({
+  mockGenerateRecoveryPlan: vi.fn(),
+  mockSaveRecoveryPlan: vi.fn(),
+}));
+
+vi.mock('../src/recovery-plan.js', () => ({
+  generateRecoveryPlan: mockGenerateRecoveryPlan,
+}));
+
+vi.mock('../src/recovery-plan-store.js', () => ({
+  saveRecoveryPlan: mockSaveRecoveryPlan,
+}));
+
 import { createApp } from '../src/app.js';
+
+const defaultPlan = {
+  name: 'Gentle Reset',
+  estimatedMinutes: 30,
+  tasks: [
+    {
+      name: 'Hydrate and rest',
+      category: 'physical' as const,
+      durationMinutes: 10,
+      tip: 'Drink water slowly',
+      difficulty: 1,
+      isRequired: true,
+      tags: ['rest'],
+    },
+  ],
+};
 
 describe('POST /recovery-plan', () => {
   const originalToken = process.env.API_TOKEN;
@@ -8,6 +38,10 @@ describe('POST /recovery-plan', () => {
 
   beforeEach(() => {
     process.env.API_TOKEN = 'test-token';
+    mockGenerateRecoveryPlan.mockReset();
+    mockSaveRecoveryPlan.mockReset();
+    mockGenerateRecoveryPlan.mockResolvedValue(defaultPlan);
+    mockSaveRecoveryPlan.mockResolvedValue({ id: 'plan-123' });
     app = createApp();
   });
 
@@ -53,16 +87,25 @@ describe('POST /recovery-plan', () => {
     expect(response.body.details).toBeDefined();
   });
 
-  it('returns 201 and echoes the input for a valid request', async () => {
+  it('generates and persists a recovery plan for a valid request', async () => {
+    const plan = defaultPlan;
+
+    mockGenerateRecoveryPlan.mockResolvedValueOnce(plan);
+    mockSaveRecoveryPlan.mockResolvedValueOnce({ id: 'plan-123' });
+
     const response = await request(app)
       .post('/recovery-plan')
       .set('Authorization', 'Bearer test-token')
       .send({ input: 'Rest and hydrate' });
 
+    expect(mockGenerateRecoveryPlan).toHaveBeenCalledWith('Rest and hydrate');
+    expect(mockSaveRecoveryPlan).toHaveBeenCalledWith(plan);
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       message: 'New recovery plan created successfully!',
       input: 'Rest and hydrate',
+      plan,
+      savedPlanId: 'plan-123',
     });
   });
 
