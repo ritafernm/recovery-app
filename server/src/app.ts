@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import cors from 'cors';
 import { z } from 'zod';
 import { pathToFileURL } from 'node:url';
+import crypto from 'crypto';
 
 const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Number(process.env.PORT || 5000);
@@ -37,7 +38,7 @@ export function createApp() {
       });
     }
 
-    if (!expectedToken || authHeader !== `Bearer ${expectedToken}`) {
+    if (!expectedToken || !crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(`Bearer ${expectedToken}`))) {
       return res.status(403).json({
         error: 'Forbidden',
         message: 'The provided token is not allowed.',
