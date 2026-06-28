@@ -1,5 +1,5 @@
 ### Recover plan request
-POST http://127.0.0.1:5000/recovery-plan
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/recovery-plan
 Content-Type: application/json
 Authorization: Bearer demo-token
 
@@ -8,7 +8,7 @@ Authorization: Bearer demo-token
 }
 
 ### Missing token
-POST http://127.0.0.1:5000/recovery-plan
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/recovery-plan
 Content-Type: application/json
 
 {
@@ -16,7 +16,7 @@ Content-Type: application/json
 }
 
 ### Invalid token
-POST http://127.0.0.1:5000/recovery-plan
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/recovery-plan
 Content-Type: application/json
 Authorization: Bearer wrong-token
 
