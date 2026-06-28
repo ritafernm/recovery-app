@@ -30,8 +30,22 @@ export function createApp() {
     skipFailedRequests: true,
   });
 
+  const isProduction = process.env.NODE_ENV === 'production';
+  const allowedOrigins = (process.env.CORS_ORIGIN ?? (isProduction ? '' : 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000')).split(',').map((origin) => origin.trim()).filter(Boolean);
+
+  const corsOrigin = isProduction
+    ? (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(new Error('Not allowed by CORS'));
+      }
+    : true;
+
   app.use(cors({
-    origin: true,
+    origin: corsOrigin,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   }));
@@ -79,11 +93,11 @@ export function createApp() {
 
     const { input } = validation.data;
 
-    return res.status(201).json({
-      message: 'New recovery plan created successfully!',
-      input,
-    });
-  });
+      return res.status(201).json({
+        message: 'New recovery plan created successfully!',
+        input,
+              });
+      });
 
   return app;
 }

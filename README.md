@@ -40,4 +40,6 @@ Copy [.env.example](.env.example) to `.env` and fill in the required values befo
 
 Required variables include:
 - `PORT`
+- `NODE_ENV`
+- `CORS_ORIGIN`
 - `ANTHROPIC_API_KEY`
