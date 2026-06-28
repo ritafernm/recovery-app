@@ -54,8 +54,6 @@ export function createApp() {
       });
     }
 
-    rateLimitMap.set(clientKey, currentRequests + 1);
-
     const validation = recoveryRequestSchema.safeParse(req.body);
 
     if (!validation.success) {
@@ -64,6 +62,8 @@ export function createApp() {
         details: validation.error.flatten(),
       });
     }
+
+    rateLimitMap.set(clientKey, currentRequests + 1);
 
     const { input } = validation.data;
 
