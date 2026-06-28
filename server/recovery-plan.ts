@@ -34,25 +34,25 @@ export const RecoveryPlanSchema = z.object({
 
 export type RecoveryPlan = z.infer<typeof RecoveryPlanSchema>;
 
-class RoutineAIError extends Error {
+class RecoveryPlanAIError extends Error {
   constructor(public statusCode: 502 | 504, message: string) {
     super(message);
-    this.name = 'RoutineAIError';
+    this.name = 'RecoveryPlanAIError';
   }
 }
 
-function classifyAIError(error: unknown): RoutineAIError {
+function classifyAIError(error: unknown): RecoveryPlanAIError {
   const message = error instanceof Error ? error.message : String(error);
   const normalizedMessage = message.toLowerCase();
 
   if (normalizedMessage.includes('timeout') || normalizedMessage.includes('timed out')) {
-    return new RoutineAIError(504, 'The AI service timed out while generating the routine.');
+    return new RecoveryPlanAIError(504, 'The AI service timed out while generating the recovery plan.');
   }
 
-  return new RoutineAIError(502, `The AI service failed: ${message}`);
+  return new RecoveryPlanAIError(502, `The AI service failed: ${message}`);
 }
 
-async function getRoutine(input: string) {
+async function getRecoveryPlan(input: string) {
   try {
     const result = await generateText({
       model: anthropic('claude-sonnet-4-6'),
@@ -70,14 +70,14 @@ async function getRoutine(input: string) {
   }
 }
 
-const input = process.argv[2] ?? 'I feel tired and need a gentle recovery routine.';
+const input = process.argv[2] ?? 'I feel tired and need a gentle recovery plan.';
 
-getRoutine(input)
+getRecoveryPlan(input)
   .then((result) => {
     console.log(JSON.stringify(result, null, 2));
   })
   .catch((error) => {
-    if (error instanceof RoutineAIError) {
+    if (error instanceof RecoveryPlanAIError) {
       console.error(JSON.stringify({
         error: error.message,
         statusCode: error.statusCode,
@@ -86,6 +86,6 @@ getRoutine(input)
       return;
     }
 
-    console.error('Error generating routine:', error);
+    console.error('Error generating recovery plan:', error);
     process.exitCode = 502;
   });
