@@ -8,9 +8,6 @@ const { mockGenerateRecoveryPlan, mockSaveRecoveryPlan } = vi.hoisted(() => ({
 
 vi.mock('../src/recovery-plan.js', () => ({
   generateRecoveryPlan: mockGenerateRecoveryPlan,
-}));
-
-vi.mock('../src/recovery-plan-store.js', () => ({
   saveRecoveryPlan: mockSaveRecoveryPlan,
 }));
 

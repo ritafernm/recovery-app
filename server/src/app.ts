@@ -6,8 +6,7 @@ import { z } from 'zod';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import crypto from 'crypto';
-import { generateRecoveryPlan } from './recovery-plan.js';
-import { saveRecoveryPlan } from './recovery-plan-store.js';
+import { generateRecoveryPlan, saveRecoveryPlan } from './recovery-plan.js';
 import { markLogDone, getUserLogs } from './recovery-plan-logs.js';
 
 function loadServerEnv() {

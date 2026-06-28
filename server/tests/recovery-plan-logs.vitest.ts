@@ -8,9 +8,6 @@ const { mockMarkLogDone, mockGetUserLogs } = vi.hoisted(() => ({
 
 vi.mock('../src/recovery-plan.js', () => ({
   generateRecoveryPlan: vi.fn(),
-}));
-
-vi.mock('../src/recovery-plan-store.js', () => ({
   saveRecoveryPlan: vi.fn(),
 }));
 
