@@ -1,8 +1,6 @@
 import { generateText, Output } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
-import dotenv from 'dotenv';
-dotenv.config();
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 
@@ -34,8 +32,28 @@ export const RecoveryPlanSchema = z.object({
 
 export type RecoveryPlan = z.infer<typeof RecoveryPlanSchema>;
 
-/*async function getRoutine(input: string) {
-  const result = await generateText({
+class RecoveryPlanAIError extends Error {
+  constructor(public statusCode: 502 | 504, message: string) {
+    super(message);
+    this.name = 'RecoveryPlanAIError';
+  }
+}
+
+function classifyAIError(error: unknown): RecoveryPlanAIError {
+  const message = error instanceof Error ? error.message : String(error);
+  const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes('timeout') || normalizedMessage.includes('timed out')) {
+    return new RecoveryPlanAIError(504, 'The AI service timed out while generating the recovery plan.');
+  }
+
+  return new RecoveryPlanAIError(502, `The AI service failed: ${message}`);
+}
+
+async function getRecoveryPlan(input: string) {
+  const timeoutMs = Number(process.env.AI_TIMEOUT_MS || 30000);
+
+  const aiOperation = generateText({
     model: anthropic('claude-sonnet-4-6'),
     output: Output.object({
       schema: RecoveryPlanSchema,
@@ -45,43 +63,36 @@ export type RecoveryPlan = z.infer<typeof RecoveryPlanSchema>;
              estimatedMinutes, and the tasks array.`,
   });
 
-  return result;
-}*/
-
-async function getRoutine(input: string) {
-  const result = await generateText({
-    model: anthropic('claude-sonnet-4-6'),
-    prompt: `Generate a recovery plan for: "${input}". 
-             Ensure the output is valid JSON strictly following this schema: ${JSON.stringify(RecoveryPlanSchema.shape)}`,
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error('AI request timed out'));
+    }, timeoutMs);
   });
 
-  // 1. Manually parse the text response
   try {
-    const rawObject = JSON.parse(result.text);
-
-    // 2. Run safeParse on the raw object
-    const validationResult = RecoveryPlanSchema.safeParse(rawObject);
-
-    if (!validationResult.success) {
-      console.error("Validation failed! Details:", validationResult.error.format());
-      throw new Error("AI output did not match the required schema.");
-    }
-
-    // 3. Return the validated, typed object
-    return validationResult.data;
-
-  } catch (e) {
-    console.error("Failed to parse or validate JSON:", e);
-    throw e;
+    const result = await Promise.race([aiOperation, timeoutPromise]);
+    return result;
+  } catch (error) {
+    throw classifyAIError(error);
   }
 }
 
-const input = process.argv[2] ?? 'I feel tired and need a gentle recovery routine.';
+const input = process.argv[2] ?? 'I feel tired and need a gentle recovery plan.';
 
-getRoutine(input)
+getRecoveryPlan(input)
   .then((result) => {
     console.log(JSON.stringify(result, null, 2));
   })
   .catch((error) => {
-    console.error('Error generating routine:', error);
+    if (error instanceof RecoveryPlanAIError) {
+      console.error(JSON.stringify({
+        error: error.message,
+        statusCode: error.statusCode,
+      }, null, 2));
+      process.exitCode = error.statusCode;
+      return;
+    }
+
+    console.error('Error generating recovery plan:', error);
+    process.exitCode = 502;
   });

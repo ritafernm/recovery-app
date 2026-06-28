@@ -1,0 +1,25 @@
+### Recover plan request
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/recovery-plan
+Content-Type: application/json
+Authorization: Bearer demo-token
+
+{
+  "input": "I need help with recovery planning"
+}
+
+### Missing token
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/recovery-plan
+Content-Type: application/json
+
+{
+  "input": "This should fail without a token"
+}
+
+### Invalid token
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/recovery-plan
+Content-Type: application/json
+Authorization: Bearer wrong-token
+
+{
+  "input": "This should fail with a bad token"
+}
