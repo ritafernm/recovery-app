@@ -1,12 +1,24 @@
 import { generateText, Output } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
-import { pathToFileURL } from 'node:url';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const apiKey = process.env.ANTHROPIC_API_KEY;
+function loadServerEnv() {
+  const envFilePath = resolve(dirname(fileURLToPath(import.meta.url)), '.env');
+
+  if (typeof process.loadEnvFile === 'function') {
+    process.loadEnvFile(envFilePath);
+  }
+}
+
+loadServerEnv();
+
 let anthropicClient: ReturnType<typeof createAnthropic> | null = null;
 
 function getAnthropicClient() {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY is not defined in the environment.');
   }

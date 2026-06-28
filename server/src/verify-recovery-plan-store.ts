@@ -10,7 +10,7 @@ async function main() {
     throw new Error('SUPABASE_URL and a Supabase key must be configured.');
   }
 
-  const response = await fetch(`${supabaseUrl}/rest/v1/recovery_plans?select=*`, {
+  const response = await fetch(`${supabaseUrl}/rest/v1/recovery_plans?select=id,name,plan_data,created_at&order=created_at.desc`, {
     method: 'GET',
     headers: {
       apikey: supabaseKey,

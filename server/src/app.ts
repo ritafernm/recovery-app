@@ -3,10 +3,21 @@ import type { Request, Response } from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import { pathToFileURL } from 'node:url';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import crypto from 'crypto';
 import { generateRecoveryPlan } from './recovery-plan.js';
 import { saveRecoveryPlan } from './recovery-plan-store.js';
+
+function loadServerEnv() {
+  const envFilePath = resolve(dirname(fileURLToPath(import.meta.url)), '.env');
+
+  if (typeof process.loadEnvFile === 'function') {
+    process.loadEnvFile(envFilePath);
+  }
+}
+
+loadServerEnv();
 
 const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Number(process.env.PORT || 5000);
