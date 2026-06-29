@@ -57,7 +57,7 @@ export async function markLogDone(logId: string) {
         Authorization: `Bearer ${supabaseKey}`,
         Prefer: 'return=representation',
       },
-      body: JSON.stringify({ user_status: 'done' }),
+      body: JSON.stringify({ user_status: 'done', completed_at: new Date().toISOString() }),
     }
   );
 
@@ -85,7 +85,7 @@ export async function getUserLogs(userId: string) {
   }
 
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/recovery_plan_logs?user_id=eq.${encodeURIComponent(userId)}&order=completed_at.desc`,
+    `${supabaseUrl}/rest/v1/recovery_plan_logs?user_id=eq.${encodeURIComponent(userId)}&order=created_at.desc`,
     {
       method: 'GET',
       headers: {
