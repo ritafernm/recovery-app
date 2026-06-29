@@ -81,8 +81,10 @@ export async function generateRecoveryPlan(input: string): Promise<RecoveryPlan>
              estimatedMinutes, and the tasks array.`,
   });
 
+  let timeoutId: ReturnType<typeof setTimeout>;
+
   const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
+    timeoutId = setTimeout(() => {
       reject(new Error('AI request timed out'));
     }, timeoutMs);
   });
@@ -92,6 +94,8 @@ export async function generateRecoveryPlan(input: string): Promise<RecoveryPlan>
     return result.output;
   } catch (error) {
     throw classifyAIError(error);
+  } finally {
+    clearTimeout(timeoutId!);
   }
 }
 
