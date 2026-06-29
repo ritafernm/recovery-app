@@ -6,9 +6,10 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "vitest run",
-    "dev": "tsx watch --env-file=src/.env src/app.ts",
+    "dev": "tsx watch --env-file=./src/.env ./src/app.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node --env-file=src/.env dist/app.js"
+    "start": "node --env-file=./src/.env ./dist/app.js",
+    "recovery-plan": "tsx --env-file=./src/.env ./src/recovery-plan.ts"
   },
   "keywords": [],
   "author": "",

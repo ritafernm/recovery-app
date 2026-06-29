@@ -1,10 +1,20 @@
-### Recover plan request
+### Create recovery plan
 POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/recovery-plan
 Content-Type: application/json
-Authorization: Bearer demo-token
+Authorization: Bearer {{$dotenv API_TOKEN}}
 
 {
   "input": "I need help with recovery planning"
+}
+
+### Create recovery plan with userId — response includes logId for GET /logs and PATCH /logs/:id/done
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/recovery-plan
+Content-Type: application/json
+Authorization: Bearer {{$dotenv API_TOKEN}}
+
+{
+  "input": "I need help with recovery planning",
+  "userId": "{{$dotenv USER_UUID}}"
 }
 
 ### Missing token

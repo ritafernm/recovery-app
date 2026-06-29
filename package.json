@@ -7,10 +7,15 @@
     "server": "npm run dev -w server",
     "build": "npm run build -w server",
     "start": "npm run start -w server",
-    "dev": "concurrently \"npm run client\" \"npm run server\""
+    "dev": "concurrently \"npm run client\" \"npm run server\"",
+    "test": "npm run test -w server",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "supabase": "^2.108.0"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.86"
