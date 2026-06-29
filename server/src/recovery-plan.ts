@@ -5,10 +5,14 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 function loadServerEnv() {
-  const envFilePath = resolve(dirname(fileURLToPath(import.meta.url)), '.env');
+  try {
+    const envFilePath = resolve(dirname(fileURLToPath(import.meta.url)), '.env');
 
-  if (typeof process.loadEnvFile === 'function') {
-    process.loadEnvFile(envFilePath);
+    if (typeof process.loadEnvFile === 'function') {
+      process.loadEnvFile(envFilePath);
+    }
+  } catch {
+    console.warn('No .env file found — relying on environment variables already set.');
   }
 }
 

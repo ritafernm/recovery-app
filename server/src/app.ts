@@ -10,10 +10,14 @@ import { generateRecoveryPlan, saveRecoveryPlan } from './recovery-plan.js';
 import { createLog, markLogDone, getUserLogs } from './recovery-plan-logs.js';
 
 function loadServerEnv() {
-  const envFilePath = resolve(dirname(fileURLToPath(import.meta.url)), '.env');
+  try {
+    const envFilePath = resolve(dirname(fileURLToPath(import.meta.url)), '.env');
 
-  if (typeof process.loadEnvFile === 'function') {
-    process.loadEnvFile(envFilePath);
+    if (typeof process.loadEnvFile === 'function') {
+      process.loadEnvFile(envFilePath);
+    }
+  } catch {
+    console.warn('No .env file found — relying on environment variables already set.');
   }
 }
 
