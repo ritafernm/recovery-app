@@ -1,27 +1,20 @@
-export async function createLog(planId: string, userId?: string) {
+export async function createLog(planId: string, userId: string, userToken: string) {
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-  const resolvedUserId = userId ?? process.env.USER_UUID;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('SUPABASE_URL and a Supabase key must be configured.');
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be configured.');
   }
-
-  if (!resolvedUserId) {
-    throw new Error('A userId must be provided or USER_UUID must be set.');
-  }
-
-  const body: Record<string, string> = { plan_id: planId, user_id: resolvedUserId };
 
   const response = await fetch(`${supabaseUrl}/rest/v1/recovery_plan_logs`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${userToken}`,
       Prefer: 'return=representation',
     },
-    body: JSON.stringify([body]),
+    body: JSON.stringify([{ plan_id: planId, user_id: userId }]),
   });
 
   if (!response.ok) {
@@ -39,12 +32,12 @@ export async function createLog(planId: string, userId?: string) {
   return { id: String(log.id) };
 }
 
-export async function markLogDone(logId: string) {
+export async function markLogDone(logId: string, userToken: string) {
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('SUPABASE_URL and a Supabase key must be configured.');
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be configured.');
   }
 
   const response = await fetch(
@@ -53,8 +46,8 @@ export async function markLogDone(logId: string) {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${userToken}`,
         Prefer: 'return=representation',
       },
       body: JSON.stringify({ user_status: 'done', completed_at: new Date().toISOString() }),
@@ -76,21 +69,21 @@ export async function markLogDone(logId: string) {
   return updated;
 }
 
-export async function getUserLogs(userId: string) {
+export async function getUserLogs(userToken: string) {
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('SUPABASE_URL and a Supabase key must be configured.');
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be configured.');
   }
 
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/recovery_plan_logs?user_id=eq.${encodeURIComponent(userId)}&order=created_at.desc`,
+    `${supabaseUrl}/rest/v1/recovery_plan_logs?order=created_at.desc`,
     {
       method: 'GET',
       headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${userToken}`,
       },
     }
   );
