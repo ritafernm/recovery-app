@@ -1,0 +1,45 @@
+### Sign up — creates a new user (check email to confirm before logging in)
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "tafok79227@divahd.com",
+  "password": "password123"
+}
+
+### Login — run this first, then use the token in all requests below
+# @name login
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "tafok79227@divahd.com",
+  "password": "password123"
+}
+
+### Logout — invalidates the token in Supabase
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/logout
+Authorization: Bearer {{login.response.body.access_token}}
+
+### Access a protected route with the token from login
+GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs
+Authorization: Bearer {{login.response.body.access_token}}
+
+### Missing token — should return 400 (no token to invalidate)
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/logout
+
+### Login with wrong password — should return 400
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "wrongpassword"
+}
+
+### Access protected route with no token — should return 401
+GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs
+
+### Access protected route with invalid token — should return 401
+GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs
+Authorization: Bearer not-a-real-token
