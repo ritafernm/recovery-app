@@ -7,10 +7,11 @@ export async function createLog(planId: string, userId?: string) {
     throw new Error('SUPABASE_URL and a Supabase key must be configured.');
   }
 
-  const body: Record<string, string> = { plan_id: planId };
-  if (resolvedUserId) {
-    body.user_id = resolvedUserId;
+  if (!resolvedUserId) {
+    throw new Error('A userId must be provided or USER_UUID must be set.');
   }
+
+  const body: Record<string, string> = { plan_id: planId, user_id: resolvedUserId };
 
   const response = await fetch(`${supabaseUrl}/rest/v1/recovery_plan_logs`, {
     method: 'POST',
