@@ -21,7 +21,10 @@ create policy "Users can insert own logs" on public.recovery_plan_logs
   for insert with check (auth.uid() = user_id);
 
 -- 3. Grant Privileges
-grant usage on schema public to authenticated;
-grant all on public.users to authenticated;
-grant all on public.recovery_plans to authenticated;
-grant all on public.recovery_plan_logs to authenticated;
+grant select, insert, update, delete on public.users to authenticated;
+grant select, insert, update, delete on public.recovery_plans to authenticated;
+grant select, insert, update, delete on public.recovery_plan_logs to authenticated;
+
+grant select, insert, update, delete on public.recovery_plans to service_role;
+grant select, insert, update, delete on public.recovery_plan_logs to service_role;
+grant select, insert, update, delete on public.users to service_role;
