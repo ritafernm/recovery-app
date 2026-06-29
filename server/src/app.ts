@@ -27,6 +27,8 @@ const recoveryRequestSchema = z.object({
   userId: z.uuid('userId must be a valid UUID').optional(),
 });
 
+const allowedStatuses = [200, 201, 401, 403];
+
 export function createApp() {
   const app = express();
   const recoveryPlanLimiter = rateLimit({
@@ -42,6 +44,7 @@ export function createApp() {
       });
     },
     skipFailedRequests: true,
+    requestWasSuccessful: (_req, res) => allowedStatuses.includes(res.statusCode),
   });
 
   const isProduction = process.env.NODE_ENV === 'production';
