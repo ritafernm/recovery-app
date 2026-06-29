@@ -42,8 +42,10 @@ authRouter.post('/signup', async (req: Request, res: Response) => {
       message: 'Signup successful. Check your email to confirm your account.',
       user: data.user,
     });
-  } catch {
-    res.status(500).json({ error: 'Signup request failed.' });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[signup]', message);
+    res.status(500).json({ error: 'Signup request failed.', message });
   }
 });
 
@@ -76,8 +78,10 @@ authRouter.post('/login', async (req: Request, res: Response) => {
       access_token: data.access_token as string,
       user: { id: data.user?.id as string, email: data.user?.email as string },
     });
-  } catch {
-    res.status(500).json({ error: 'Login request failed.' });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[login]', message);
+    res.status(500).json({ error: 'Login request failed.', message });
   }
 });
 
@@ -104,7 +108,9 @@ authRouter.post('/logout', async (req: Request, res: Response) => {
     });
 
     res.json({ message: 'Logged out successfully.' });
-  } catch {
-    res.status(500).json({ error: 'Logout request failed.' });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[logout]', message);
+    res.status(500).json({ error: 'Logout request failed.', message });
   }
 });
