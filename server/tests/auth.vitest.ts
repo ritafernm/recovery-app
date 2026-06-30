@@ -12,8 +12,8 @@ function makeFetchResponse(ok: boolean, status: number, body: unknown): Response
 }
 
 describe('POST /auth/signup', () => {
-  let app: ReturnType<typeof createApp>;
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
+  let app: ReturnType<typeof createApp>; 
+  let fetchSpy: any;
 
   beforeEach(() => {
     process.env.SUPABASE_URL = 'https://example.supabase.co';
@@ -31,26 +31,35 @@ describe('POST /auth/signup', () => {
   it('returns 400 when email is missing', async () => {
     const response = await request(app)
       .post('/auth/signup')
-      .send({ password: 'password123' });
+      .send({ username: 'testuser', password: 'password123' });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('email and password are required.');
+    expect(response.body.error).toBe('email, username, and password are required.');
+  });
+
+  it('returns 400 when username is missing', async () => {
+    const response = await request(app)
+      .post('/auth/signup')
+      .send({ email: 'user@example.com', password: 'password123' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('email, username, and password are required.');
   });
 
   it('returns 400 when password is missing', async () => {
     const response = await request(app)
       .post('/auth/signup')
-      .send({ email: 'user@example.com' });
+      .send({ email: 'user@example.com', username: 'testuser' });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('email and password are required.');
+    expect(response.body.error).toBe('email, username, and password are required.');
   });
 
-  it('returns 400 when both email and password are missing', async () => {
+  it('returns 400 when all fields are missing', async () => {
     const response = await request(app).post('/auth/signup').send({});
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('email and password are required.');
+    expect(response.body.error).toBe('email, username, and password are required.');
   });
 
   it('returns 201 when signup is successful', async () => {
@@ -60,11 +69,17 @@ describe('POST /auth/signup', () => {
 
     const response = await request(app)
       .post('/auth/signup')
-      .send({ email: 'user@example.com', password: 'password123' });
+      .send({ email: 'user@example.com', username: 'testuser', password: 'password123' });
 
     expect(response.status).toBe(201);
     expect(response.body.message).toBe('Signup successful. Check your email to confirm your account.');
     expect(response.body.user).toMatchObject({ id: 'user-123', email: 'user@example.com' });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://example.supabase.co/auth/v1/signup',
+      expect.objectContaining({
+        body: JSON.stringify({ email: 'user@example.com', password: 'password123', data: { username: 'testuser' } }),
+      })
+    );
   });
 
   it('forwards the Supabase error status and message on failure', async () => {
@@ -74,7 +89,7 @@ describe('POST /auth/signup', () => {
 
     const response = await request(app)
       .post('/auth/signup')
-      .send({ email: 'existing@example.com', password: 'password123' });
+      .send({ email: 'existing@example.com', username: 'testuser', password: 'password123' });
 
     expect(response.status).toBe(422);
     expect(response.body.error).toBe('Email already registered.');
@@ -85,7 +100,7 @@ describe('POST /auth/signup', () => {
 
     const response = await request(app)
       .post('/auth/signup')
-      .send({ email: 'user@example.com', password: 'password123' });
+      .send({ email: 'user@example.com', username: 'testuser', password: 'password123' });
 
     expect(response.status).toBe(500);
     expect(response.body.error).toBe('Signup request failed.');
@@ -96,7 +111,7 @@ describe('POST /auth/signup', () => {
 
     const response = await request(app)
       .post('/auth/signup')
-      .send({ email: 'user@example.com', password: 'password123' });
+      .send({ email: 'user@example.com', username: 'testuser', password: 'password123' });
 
     expect(response.status).toBe(500);
     expect(response.body.error).toBe('Signup request failed.');
@@ -106,7 +121,7 @@ describe('POST /auth/signup', () => {
 
 describe('POST /auth/login', () => {
   let app: ReturnType<typeof createApp>;
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
+  let fetchSpy: any;
 
   beforeEach(() => {
     process.env.SUPABASE_URL = 'https://example.supabase.co';
@@ -121,13 +136,13 @@ describe('POST /auth/login', () => {
     delete process.env.SUPABASE_ANON_KEY;
   });
 
-  it('returns 400 when email is missing', async () => {
+  it('returns 400 when email and username are both missing', async () => {
     const response = await request(app)
       .post('/auth/login')
       .send({ password: 'password123' });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('email and password are required.');
+    expect(response.body.error).toBe('email or username, and password are required.');
   });
 
   it('returns 400 when password is missing', async () => {
@@ -136,10 +151,10 @@ describe('POST /auth/login', () => {
       .send({ email: 'user@example.com' });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('email and password are required.');
+    expect(response.body.error).toBe('email or username, and password are required.');
   });
 
-  it('returns an access token on successful login', async () => {
+  it('returns an access token on successful login with email', async () => {
     fetchSpy.mockResolvedValueOnce(
       makeFetchResponse(true, 200, {
         access_token: 'jwt-token-123',
@@ -155,6 +170,61 @@ describe('POST /auth/login', () => {
     expect(response.body.message).toBe('Login successful.');
     expect(response.body.access_token).toBe('jwt-token-123');
     expect(response.body.user).toMatchObject({ id: 'user-123', email: 'user@example.com' });
+  });
+
+  it('returns an access token on successful login with username', async () => {
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+
+    // First fetch: username → email lookup
+    fetchSpy.mockResolvedValueOnce(
+      makeFetchResponse(true, 200, [{ email: 'user@example.com' }])
+    );
+    // Second fetch: Supabase auth token
+    fetchSpy.mockResolvedValueOnce(
+      makeFetchResponse(true, 200, {
+        access_token: 'jwt-token-123',
+        user: { id: 'user-123', email: 'user@example.com' },
+      })
+    );
+
+    const response = await request(app)
+      .post('/auth/login')
+      .send({ username: 'testuser', password: 'password123' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe('Login successful.');
+    expect(response.body.access_token).toBe('jwt-token-123');
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('users?select=email&username=eq.testuser'),
+      expect.objectContaining({ headers: expect.objectContaining({ apikey: 'test-service-role-key' }) })
+    );
+
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  });
+
+  it('returns 400 when username is not found', async () => {
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+
+    fetchSpy.mockResolvedValueOnce(makeFetchResponse(true, 200, []));
+
+    const response = await request(app)
+      .post('/auth/login')
+      .send({ username: 'unknown', password: 'password123' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('No account found with that username.');
+
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  });
+
+  it('returns 500 when logging in with username but service role key is not configured', async () => {
+    const response = await request(app)
+      .post('/auth/login')
+      .send({ username: 'testuser', password: 'password123' });
+
+    expect(response.status).toBe(500);
+    expect(response.body.error).toBe('Login request failed.');
   });
 
   it('forwards the Supabase error status and message on failed login', async () => {
@@ -196,7 +266,7 @@ describe('POST /auth/login', () => {
 
 describe('POST /auth/logout', () => {
   let app: ReturnType<typeof createApp>;
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
+  let fetchSpy: any;
 
   beforeEach(() => {
     process.env.SUPABASE_URL = 'https://example.supabase.co';

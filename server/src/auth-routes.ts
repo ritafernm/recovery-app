@@ -15,10 +15,10 @@ function getAuthConfig() {
 export const authRouter = express.Router();
 
 authRouter.post('/signup', async (req: Request, res: Response) => {
-  const { email, password } = req.body ?? {};
+  const { email, username, password } = req.body ?? {};
 
-  if (!email || !password) {
-    res.status(400).json({ error: 'email and password are required.' });
+  if (!email || !username || !password) {
+    res.status(400).json({ error: 'email, username, and password are required.' });
     return;
   }
 
@@ -28,7 +28,7 @@ authRouter.post('/signup', async (req: Request, res: Response) => {
     const response = await fetch(`${supabaseUrl}/auth/v1/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, data: { username } }),
     });
 
     const data = await response.json();
@@ -50,15 +50,49 @@ authRouter.post('/signup', async (req: Request, res: Response) => {
 });
 
 authRouter.post('/login', async (req: Request, res: Response) => {
-  const { email, password } = req.body ?? {};
+  const { email: emailInput, username, password } = req.body ?? {};
 
-  if (!email || !password) {
-    res.status(400).json({ error: 'email and password are required.' });
+  if ((!emailInput && !username) || !password) {
+    res.status(400).json({ error: 'email or username, and password are required.' });
     return;
   }
 
   try {
     const { supabaseUrl, supabaseAnonKey } = getAuthConfig();
+
+    let email: string = emailInput;
+
+    if (!email && username) {
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!serviceRoleKey) {
+        res.status(500).json({ error: 'Login request failed.', message: 'Supabase service role is not configured.' });
+        return;
+      }
+
+      const lookupRes = await fetch(
+        `${supabaseUrl}/rest/v1/users?select=email&username=eq.${encodeURIComponent(username as string)}&limit=1`,
+        {
+          headers: {
+            apikey: serviceRoleKey,
+            Authorization: `Bearer ${serviceRoleKey}`,
+          },
+        }
+      );
+
+      if (!lookupRes.ok) {
+        res.status(500).json({ error: 'Login request failed.', message: 'Username lookup failed.' });
+        return;
+      }
+
+      const rows = await lookupRes.json() as Array<{ email: string }>;
+      const foundEmail = rows[0]?.email;
+      if (!foundEmail) {
+        res.status(400).json({ error: 'No account found with that username.' });
+        return;
+      }
+
+      email = foundEmail;
+    }
 
     const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
       method: 'POST',
