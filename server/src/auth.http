@@ -3,8 +3,8 @@ POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/signup
 Content-Type: application/json
 
 {
-  "email": "tafok79227@divahd.com",
-  "password": "password123"
+  "email": "{{$dotenv TEST_USER_EMAIL}}",
+  "password": "{{$dotenv TEST_USER_PASSWORD}}"
 }
 
 ### Login — run this first, then use the token in all requests below
@@ -13,8 +13,8 @@ POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "tafok79227@divahd.com",
-  "password": "password123"
+  "email": "{{$dotenv TEST_USER_EMAIL}}",
+  "password": "{{$dotenv TEST_USER_PASSWORD}}"
 }
 
 ### Logout — invalidates the token in Supabase
@@ -22,7 +22,7 @@ POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/logout
 Authorization: Bearer {{login.response.body.access_token}}
 
 ### Access a protected route with the token from login
-GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs
+GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs?userId={{login.response.body.user.id}}
 Authorization: Bearer {{login.response.body.access_token}}
 
 ### Missing token — should return 400 (no token to invalidate)
