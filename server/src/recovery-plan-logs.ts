@@ -70,11 +70,11 @@ export async function markLogDone(logId: string, userToken: string) {
   return updated;
 }
 
-export async function getUserLogs(userToken: string) {
+export async function getUserLogs(userId: string, userToken: string) {
   const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
 
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/recovery_plan_logs?order=created_at.desc`,
+    `${supabaseUrl}/rest/v1/recovery_plan_logs?user_id=eq.${encodeURIComponent(userId)}&order=created_at.desc`,
     {
       method: 'GET',
       headers: {

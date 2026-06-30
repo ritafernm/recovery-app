@@ -138,6 +138,7 @@ describe('GET /logs', () => {
         return;
       }
       req.token = token;
+      req.userId = validUserId;
       next();
     });
     mockGetUserLogs.mockReset();
@@ -168,24 +169,6 @@ describe('GET /logs', () => {
     expect(response.body).toMatchObject({ error: 'Forbidden' });
   });
 
-  it('returns 400 when userId is missing', async () => {
-    const response = await request(app)
-      .get('/logs')
-      .set('Authorization', 'Bearer test-token');
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Invalid query parameters');
-  });
-
-  it('returns 400 when userId is not a valid UUID', async () => {
-    const response = await request(app)
-      .get('/logs?userId=not-a-uuid')
-      .set('Authorization', 'Bearer test-token');
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Invalid query parameters');
-  });
-
   it('returns the logs for the given user ordered newest-first', async () => {
     const logs = [
       { id: 'log-2', user_id: validUserId, user_status: 'done', completed_at: '2026-06-28T12:00:00Z' },
@@ -194,10 +177,10 @@ describe('GET /logs', () => {
     mockGetUserLogs.mockResolvedValueOnce(logs);
 
     const response = await request(app)
-      .get(`/logs?userId=${validUserId}`)
+      .get('/logs')
       .set('Authorization', 'Bearer test-token');
 
-    expect(mockGetUserLogs).toHaveBeenCalledWith('test-token');
+    expect(mockGetUserLogs).toHaveBeenCalledWith(validUserId, 'test-token');
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ logs });
   });
@@ -206,7 +189,7 @@ describe('GET /logs', () => {
     mockGetUserLogs.mockResolvedValueOnce([]);
 
     const response = await request(app)
-      .get(`/logs?userId=${validUserId}`)
+      .get('/logs')
       .set('Authorization', 'Bearer test-token');
 
     expect(response.status).toBe(200);
@@ -217,7 +200,7 @@ describe('GET /logs', () => {
     mockGetUserLogs.mockRejectedValueOnce(new Error('Database connection failed.'));
 
     const response = await request(app)
-      .get(`/logs?userId=${validUserId}`)
+      .get('/logs')
       .set('Authorization', 'Bearer test-token');
 
     expect(response.status).toBe(502);

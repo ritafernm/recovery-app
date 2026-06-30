@@ -113,7 +113,6 @@ export function createApp() {
   });
 
   const uuidSchema = z.uuid('Invalid UUID format');
-  const getLogsQuerySchema = z.object({ userId: z.uuid('userId must be a valid UUID') });
 
   app.patch('/logs/:id/done', requireAuth, async (req: Request, res: Response) => {
     const idValidation = uuidSchema.safeParse(req.params.id);
@@ -133,14 +132,9 @@ export function createApp() {
   });
 
   app.get('/logs', requireAuth, async (req: Request, res: Response) => {
-    const queryValidation = getLogsQuerySchema.safeParse(req.query);
-    if (!queryValidation.success) {
-      return res.status(400).json({ error: 'Invalid query parameters', details: z.flattenError(queryValidation.error) });
-    }
-
     try {
-      const { token } = req as AuthenticatedRequest;
-      const logs = await getUserLogs(token);
+      const { userId, token } = req as AuthenticatedRequest;
+      const logs = await getUserLogs(userId, token);
       return res.json({ logs });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to fetch logs.';
