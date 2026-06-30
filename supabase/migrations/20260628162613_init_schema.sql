@@ -3,7 +3,6 @@ create table public.users (
   id uuid references auth.users on delete cascade primary key,
   email text unique not null,
   username text unique not null,
-  password text unique not null,
   api_token text, 
   created_at timestamp with time zone default timezone('utc'::text, now())
 );
