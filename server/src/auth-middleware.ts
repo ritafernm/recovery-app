@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { jwtVerify, errors as joseErrors } from 'jose';
 
 export interface AuthenticatedRequest extends Request {
   userId: string;
@@ -14,38 +15,31 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   }
 
   const token = authHeader.slice(7);
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+  const jwtSecret = process.env.SUPABASE_JWT_SECRET;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!jwtSecret) {
     res.status(500).json({ error: 'Server configuration error', message: 'Auth service is not configured.' });
     return;
   }
 
   try {
-    const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        apikey: supabaseAnonKey,
-      },
-    });
+    const secret = new TextEncoder().encode(jwtSecret);
+    const { payload } = await jwtVerify(token, secret);
 
-    if (!response.ok) {
-      res.status(401).json({ error: 'Unauthorized', message: 'Invalid or expired token.' });
-      return;
-    }
-
-    const user = await response.json();
-
-    if (!user?.id) {
+    const userId = payload.sub;
+    if (!userId) {
       res.status(401).json({ error: 'Unauthorized', message: 'Could not identify user from token.' });
       return;
     }
 
-    (req as AuthenticatedRequest).userId = user.id as string;
+    (req as AuthenticatedRequest).userId = userId;
     (req as AuthenticatedRequest).token = token;
     next();
-  } catch {
-    res.status(401).json({ error: 'Unauthorized', message: 'Token verification failed.' });
+  } catch (err) {
+    if (err instanceof joseErrors.JWTExpired) {
+      res.status(401).json({ error: 'Unauthorized', message: 'Token has expired.' });
+      return;
+    }
+    res.status(401).json({ error: 'Unauthorized', message: 'Invalid or expired token.' });
   }
 }
