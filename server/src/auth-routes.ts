@@ -98,7 +98,7 @@ authRouter.post('/logout', async (req: Request, res: Response) => {
   try {
     const { supabaseUrl, supabaseAnonKey } = getAuthConfig();
 
-    await fetch(`${supabaseUrl}/auth/v1/logout`, {
+    const response = await fetch(`${supabaseUrl}/auth/v1/logout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -106,6 +106,12 @@ authRouter.post('/logout', async (req: Request, res: Response) => {
         Authorization: `Bearer ${token}`,
       },
     });
+
+    if (!response.ok) {
+      const data = await response.json();
+      res.status(response.status).json({ error: data.error_description ?? data.msg ?? 'Logout failed.' });
+      return;
+    }
 
     res.json({ message: 'Logged out successfully.' });
   } catch (err) {
