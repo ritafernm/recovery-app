@@ -26,7 +26,7 @@ loadServerEnv();
 
 const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Number(process.env.PORT || 5000);
-const allowedStatuses = [200, 201, 401, 403];
+const allowedStatuses = [200, 201, 401, 500, 502, 503, 504];
 
 const recoveryRequestSchema = z.object({
   input: z.string().trim().min(1, 'Input is required'),
