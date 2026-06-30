@@ -49,8 +49,9 @@ describe('requireAuth middleware', () => {
 
   it('returns 500 when SUPABASE_JWT_SECRET is not configured', async () => {
     delete process.env.SUPABASE_JWT_SECRET;
+    const token = await signToken({ sub: 'user-123', role: 'authenticated' });
 
-    const response = await request(app).get('/logs').set('Authorization', 'Bearer some-token');
+    const response = await request(app).get('/logs').set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(500);
     expect(response.body).toMatchObject({ error: 'Server configuration error' });
