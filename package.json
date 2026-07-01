@@ -14,7 +14,7 @@
     "supabase:status": "supabase status"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
+    "concurrently": "^10.0.3",
     "supabase": "^2.108.0"
   },
   "dependencies": {

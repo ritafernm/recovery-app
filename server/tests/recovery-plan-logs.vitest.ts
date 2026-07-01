@@ -1,9 +1,10 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockMarkLogDone, mockGetUserLogs } = vi.hoisted(() => ({
+const { mockMarkLogDone, mockGetUserLogs, mockRequireAuth } = vi.hoisted(() => ({
   mockMarkLogDone: vi.fn(),
   mockGetUserLogs: vi.fn(),
+  mockRequireAuth: vi.fn(),
 }));
 
 vi.mock('../src/recovery-plan.js', () => ({
@@ -16,6 +17,10 @@ vi.mock('../src/recovery-plan-logs.js', () => ({
   getUserLogs: mockGetUserLogs,
 }));
 
+vi.mock('../src/auth-middleware.js', () => ({
+  requireAuth: mockRequireAuth,
+}));
+
 import { createApp } from '../src/app.js';
 
 describe('PATCH /logs/:id/done', () => {
@@ -25,6 +30,21 @@ describe('PATCH /logs/:id/done', () => {
 
   beforeEach(() => {
     process.env.API_TOKEN = 'test-token';
+    mockRequireAuth.mockReset();
+    mockRequireAuth.mockImplementation((req: any, res: any, next: any) => {
+      const authHeader = req.headers?.authorization as string | undefined;
+      if (!authHeader?.startsWith('Bearer ')) {
+        res.status(401).json({ error: 'Unauthorized', message: 'A valid bearer token is required.' });
+        return;
+      }
+      const token = authHeader.slice(7);
+      if (token !== process.env.API_TOKEN) {
+        res.status(403).json({ error: 'Forbidden', message: 'The provided token is not allowed.' });
+        return;
+      }
+      req.token = token;
+      next();
+    });
     mockMarkLogDone.mockReset();
     app = createApp();
   });
@@ -70,7 +90,7 @@ describe('PATCH /logs/:id/done', () => {
       .patch(`/logs/${validLogId}/done`)
       .set('Authorization', 'Bearer test-token');
 
-    expect(mockMarkLogDone).toHaveBeenCalledWith(validLogId);
+    expect(mockMarkLogDone).toHaveBeenCalledWith(validLogId, 'test-token');
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ message: 'Log marked as done.', log: updatedLog });
   });
@@ -105,6 +125,22 @@ describe('GET /logs', () => {
 
   beforeEach(() => {
     process.env.API_TOKEN = 'test-token';
+    mockRequireAuth.mockReset();
+    mockRequireAuth.mockImplementation((req: any, res: any, next: any) => {
+      const authHeader = req.headers?.authorization as string | undefined;
+      if (!authHeader?.startsWith('Bearer ')) {
+        res.status(401).json({ error: 'Unauthorized', message: 'A valid bearer token is required.' });
+        return;
+      }
+      const token = authHeader.slice(7);
+      if (token !== process.env.API_TOKEN) {
+        res.status(403).json({ error: 'Forbidden', message: 'The provided token is not allowed.' });
+        return;
+      }
+      req.token = token;
+      req.userId = validUserId;
+      next();
+    });
     mockGetUserLogs.mockReset();
     app = createApp();
   });
@@ -118,7 +154,7 @@ describe('GET /logs', () => {
   });
 
   it('returns 401 when no bearer token is provided', async () => {
-    const response = await request(app).get(`/logs?userId=${validUserId}`);
+    const response = await request(app).get('/logs');
 
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject({ error: 'Unauthorized' });
@@ -126,29 +162,11 @@ describe('GET /logs', () => {
 
   it('returns 403 when the token is invalid', async () => {
     const response = await request(app)
-      .get(`/logs?userId=${validUserId}`)
+      .get('/logs')
       .set('Authorization', 'Bearer wrong-token');
 
     expect(response.status).toBe(403);
     expect(response.body).toMatchObject({ error: 'Forbidden' });
-  });
-
-  it('returns 400 when userId is missing', async () => {
-    const response = await request(app)
-      .get('/logs')
-      .set('Authorization', 'Bearer test-token');
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Invalid query parameters');
-  });
-
-  it('returns 400 when userId is not a valid UUID', async () => {
-    const response = await request(app)
-      .get('/logs?userId=not-a-uuid')
-      .set('Authorization', 'Bearer test-token');
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Invalid query parameters');
   });
 
   it('returns the logs for the given user ordered newest-first', async () => {
@@ -159,10 +177,10 @@ describe('GET /logs', () => {
     mockGetUserLogs.mockResolvedValueOnce(logs);
 
     const response = await request(app)
-      .get(`/logs?userId=${validUserId}`)
+      .get('/logs')
       .set('Authorization', 'Bearer test-token');
 
-    expect(mockGetUserLogs).toHaveBeenCalledWith(validUserId);
+    expect(mockGetUserLogs).toHaveBeenCalledWith(validUserId, 'test-token');
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ logs });
   });
@@ -171,7 +189,7 @@ describe('GET /logs', () => {
     mockGetUserLogs.mockResolvedValueOnce([]);
 
     const response = await request(app)
-      .get(`/logs?userId=${validUserId}`)
+      .get('/logs')
       .set('Authorization', 'Bearer test-token');
 
     expect(response.status).toBe(200);
@@ -182,7 +200,7 @@ describe('GET /logs', () => {
     mockGetUserLogs.mockRejectedValueOnce(new Error('Database connection failed.'));
 
     const response = await request(app)
-      .get(`/logs?userId=${validUserId}`)
+      .get('/logs')
       .set('Authorization', 'Bearer test-token');
 
     expect(response.status).toBe(502);

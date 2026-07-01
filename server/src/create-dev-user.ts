@@ -45,7 +45,7 @@ async function main() {
       Authorization: `Bearer ${serviceRoleKey}`,
       Prefer: 'return=representation',
     },
-    body: JSON.stringify([{ id: userId, email, username, password: 'managed-by-auth' }]),
+    body: JSON.stringify([{ id: userId, email, username }]),
   });
 
   if (!dbRes.ok) {

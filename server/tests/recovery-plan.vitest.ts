@@ -1,10 +1,11 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockGenerateRecoveryPlan, mockSaveRecoveryPlan, mockCreateLog } = vi.hoisted(() => ({
+const { mockGenerateRecoveryPlan, mockSaveRecoveryPlan, mockCreateLog, mockRequireAuth } = vi.hoisted(() => ({
   mockGenerateRecoveryPlan: vi.fn(),
   mockSaveRecoveryPlan: vi.fn(),
   mockCreateLog: vi.fn(),
+  mockRequireAuth: vi.fn(),
 }));
 
 vi.mock('../src/recovery-plan.js', () => ({
@@ -14,6 +15,10 @@ vi.mock('../src/recovery-plan.js', () => ({
 
 vi.mock('../src/recovery-plan-logs.js', () => ({
   createLog: mockCreateLog,
+}));
+
+vi.mock('../src/auth-middleware.js', () => ({
+  requireAuth: mockRequireAuth,
 }));
 
 import { createApp } from '../src/app.js';
@@ -40,6 +45,21 @@ describe('POST /recovery-plan', () => {
 
   beforeEach(() => {
     process.env.API_TOKEN = 'test-token';
+    mockRequireAuth.mockReset();
+    mockRequireAuth.mockImplementation((req: any, res: any, next: any) => {
+      const authHeader = req.headers?.authorization as string | undefined;
+      if (!authHeader?.startsWith('Bearer ')) {
+        res.status(401).json({ error: 'Unauthorized', message: 'A valid bearer token is required.' });
+        return;
+      }
+      const token = authHeader.slice(7);
+      if (token !== process.env.API_TOKEN) {
+        res.status(403).json({ error: 'Forbidden', message: 'The provided token is not allowed.' });
+        return;
+      }
+      req.token = token;
+      next();
+    });
     mockGenerateRecoveryPlan.mockReset();
     mockSaveRecoveryPlan.mockReset();
     mockCreateLog.mockReset();
@@ -105,7 +125,7 @@ describe('POST /recovery-plan', () => {
 
     expect(mockGenerateRecoveryPlan).toHaveBeenCalledWith('Rest and hydrate');
     expect(mockSaveRecoveryPlan).toHaveBeenCalledWith(plan);
-    expect(mockCreateLog).toHaveBeenCalledWith('plan-123', undefined);
+    expect(mockCreateLog).toHaveBeenCalledWith('plan-123', undefined, 'test-token');
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
       message: 'New recovery plan created successfully!',

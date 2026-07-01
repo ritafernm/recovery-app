@@ -1,0 +1,74 @@
+### Sign up — creates a new user (check email to confirm before logging in)
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv TEST_USER_EMAIL}}",
+  "username": "{{$dotenv TEST_USER_USERNAME}}",
+  "password": "{{$dotenv TEST_USER_PASSWORD}}"
+}
+
+### Login with email — run this first, then use the token in all requests below
+# @name loginByEmail
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$dotenv TEST_USER_EMAIL}}",
+  "password": "{{$dotenv TEST_USER_PASSWORD}}"
+}
+
+### Login with username — alternative to email login
+# @name loginByUsername
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{$dotenv TEST_USER_USERNAME}}",
+  "password": "{{$dotenv TEST_USER_PASSWORD}}"
+}
+
+### Logout — invalidates the token in Supabase
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/logout
+Authorization: Bearer {{loginByEmail.response.body.access_token}}
+
+### Access a protected route with the token from login
+GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs?userId={{loginByEmail.response.body.user.id}}
+Authorization: Bearer {{loginByEmail.response.body.access_token}}
+
+### Missing token — should return 400 (no token to invalidate)
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/logout
+
+### Login with wrong password — should return 400
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "wrongpassword"
+}
+
+### Login with unknown username — should return 400
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "doesnotexist",
+  "password": "wrongpassword"
+}
+
+### Signup missing username — should return 400
+POST {{$dotenv BASE_URL}}:{{$dotenv PORT}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### Access protected route with no token — should return 401
+GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs
+
+### Access protected route with invalid token — should return 401
+GET {{$dotenv BASE_URL}}:{{$dotenv PORT}}/logs
+Authorization: Bearer not-a-real-token
