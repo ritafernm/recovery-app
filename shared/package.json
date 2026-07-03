@@ -1,0 +1,14 @@
+{
+  "name": "shared",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./lib/schema.ts",
+      "default": "./lib/schema.ts"
+    }
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
+}

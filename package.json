@@ -22,6 +22,7 @@
   },
   "workspaces": [
     "client",
-    "server"
+    "server",
+    "shared"
   ]
 }

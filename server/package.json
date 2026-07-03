@@ -17,6 +17,7 @@
   "type": "module",
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.85",
+    "shared": "*",
     "ai": "^6.0.208",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
