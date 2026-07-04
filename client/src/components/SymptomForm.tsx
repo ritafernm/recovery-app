@@ -3,18 +3,21 @@
 import { useState } from 'react';
 import type { RecoveryPlan } from '@/lib/schema';
 
+type ErrorKind = 'rate-limit' | 'server-error' | 'general';
+interface AppError { kind: ErrorKind; message: string; }
+
 export default function SymptomForm() {
   const [description, setDescription] = useState('');
   const [muscleSoreness, setmuscleSoreness] = useState(0);
   const [mentalStress, setMentalStress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [plan, setPlan] = useState<RecoveryPlan | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [appError, setAppError] = useState<AppError | null>(null);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function submit() {
+    if (isSubmitting) return;
     setIsSubmitting(true);
-    setError(null);
+    setAppError(null);
     setPlan(null);
     try {
       const res = await fetch('/api/recovery-plan', {
@@ -24,14 +27,27 @@ export default function SymptomForm() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error ?? `Request failed (${res.status})`);
+        const message = (data as { error?: string }).error ?? `Request failed (${res.status})`;
+        if (res.status === 429) {
+          setAppError({ kind: 'rate-limit', message });
+        } else if (res.status === 502 || res.status === 504) {
+          setAppError({ kind: 'server-error', message });
+        } else {
+          setAppError({ kind: 'general', message });
+        }
+        return;
       }
       setPlan(await res.json());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setAppError({ kind: 'general', message: err instanceof Error ? err.message : 'Something went wrong' });
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    submit();
   }
 
   return (
@@ -112,14 +128,36 @@ export default function SymptomForm() {
       <button
         type="submit"
         disabled={isSubmitting || description.trim().length === 0}
+        aria-busy={isSubmitting}
         className="mt-2 flex h-11 items-center justify-center rounded-full bg-zinc-900 px-6 text-sm font-semibold text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
       >
         {isSubmitting ? 'Generating plan…' : 'Generate Recovery Plan'}
       </button>
 
-      {error && (
+      {appError?.kind === 'rate-limit' && (
+        <div role="alert" className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <p className="font-semibold">Rate limit reached</p>
+          <p className="mt-0.5">{appError.message}</p>
+        </div>
+      )}
+
+      {appError?.kind === 'server-error' && (
+        <div role="alert" className="flex items-start justify-between gap-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+          <p>{appError.message}</p>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={isSubmitting}
+            className="shrink-0 font-semibold underline underline-offset-2 hover:no-underline disabled:opacity-50"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {appError?.kind === 'general' && (
         <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {error}
+          {appError.message}
         </p>
       )}
 
