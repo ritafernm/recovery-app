@@ -60,10 +60,10 @@ export default function SymptomForm() {
     <form
       onSubmit={handleSubmit}
       aria-describedby="symptom-form-desc"
-      className="flex flex-col gap-6 rounded-2xl border border-black/[.08] bg-white p-8 shadow-sm dark:border-white/[.1] dark:bg-zinc-900"
+      className="flex flex-col gap-6 rounded-2xl border border-black/[.08] bg-white p-4 shadow-sm sm:p-8 dark:border-white/[.1] dark:bg-zinc-900"
     >
       <div className="flex flex-col gap-1">
-        <h2 className="text-xl text-zinc-500 font-semibold tracking-tight">How are you feeling?</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-zinc-500 sm:text-xl">How are you feeling?</h2>
         <p id="symptom-form-desc" className="text-sm text-zinc-500 dark:text-zinc-400">
           Describe your symptoms and we&apos;ll build a personalised recovery plan.
         </p>
@@ -138,7 +138,7 @@ export default function SymptomForm() {
         type="submit"
         disabled={isSubmitting || description.trim().length === 0}
         aria-busy={isSubmitting}
-        className="mt-2 flex h-11 items-center justify-center rounded-full bg-zinc-900 px-6 text-sm font-semibold text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-zinc-900 px-6 text-sm font-semibold text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:self-end dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
       >
         {isSubmitting ? 'Generating plan…' : 'Generate Recovery Plan'}
       </button>

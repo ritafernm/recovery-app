@@ -26,7 +26,7 @@ export default function Home() {
         />
       </div>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Log your symptoms</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Log your symptoms</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Tell us how you&apos;re feeling and we&apos;ll generate a tailored recovery plan.
         </p>

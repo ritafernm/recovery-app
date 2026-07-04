@@ -57,7 +57,7 @@ export function CategorySection({ category, tasks }: CategorySectionProps) {
       <h4 className={`text-sm font-semibold uppercase tracking-widest ${heading}`}>
         {category}
       </h4>
-      <ul className="flex flex-col gap-3">
+      <ul className="grid gap-3 sm:grid-cols-2">
         {tasks.map((task) => (
           <li key={`${task.category}-${task.name}`}>
             <Card {...task} />

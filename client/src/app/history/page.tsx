@@ -78,7 +78,7 @@ export default async function HistoryPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Recovery History</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Recovery History</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Your past recovery plan logs.
         </p>

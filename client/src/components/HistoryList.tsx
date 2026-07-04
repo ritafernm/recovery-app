@@ -21,9 +21,9 @@ export function HistoryList({ logs, onMarkDone }: Props) {
       {logs.map((log) => (
         <li
           key={log.id}
-          className="flex items-center justify-between gap-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
+          className="flex flex-wrap items-start justify-between gap-2 rounded-xl border border-zinc-200 p-4 sm:gap-4 dark:border-zinc-800"
         >
-          <div className="flex flex-col gap-1">
+          <div className="min-w-0 flex flex-col gap-1">
             <span className="text-sm font-medium">Plan {log.plan_id}</span>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
               Logged {new Date(log.created_at).toLocaleDateString()}
