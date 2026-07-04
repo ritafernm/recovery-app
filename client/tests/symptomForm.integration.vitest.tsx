@@ -155,7 +155,7 @@ describe('SymptomForm — loading state', () => {
 
     const busyBtn = screen.getByRole('button', { name: /generating plan/i });
     expect(busyBtn).toHaveAttribute('aria-busy', 'true');
-    expect(busyBtn).toBeDisabled();
+    expect(busyBtn).toHaveAttribute('aria-disabled', 'true');
 
     resolve(HttpResponse.json(recoveryPlan));
     await screen.findByText('Full Recovery');

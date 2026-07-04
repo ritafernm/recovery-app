@@ -36,10 +36,10 @@ export function HistoryList({ logs, onMarkDone }: Props) {
           </div>
 
           {log.user_status !== 'done' ? (
-            <form action={onMarkDone.bind(null, log.id)}>
+            <form action={() => onMarkDone(log.id)}>
               <button
                 type="submit"
-                aria-label={`Mark plan logged on ${new Date(log.created_at).toLocaleDateString('en-CA')} as done`}
+                aria-label={`Mark done — plan logged on ${new Date(log.created_at).toLocaleDateString('en-CA')}`}
                 className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-teal-700"
               >
                 Mark done

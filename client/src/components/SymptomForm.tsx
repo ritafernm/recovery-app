@@ -16,7 +16,7 @@ export default function SymptomForm() {
   const [appError, setAppError] = useState<AppError | null>(null);
 
   async function submit() {
-    if (isSubmitting) return;
+    if (isSubmitting || !description.trim()) return;
     setIsSubmitting(true);
     setAppError(null);
     setPlan(null);
@@ -101,6 +101,15 @@ export default function SymptomForm() {
           step={1}
           value={muscleSoreness}
           onChange={(e) => setmuscleSoreness(Number(e.target.value))}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              setmuscleSoreness(v => Math.min(5, v + 1));
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              setmuscleSoreness(v => Math.max(0, v - 1));
+            }
+          }}
           aria-valuetext={soreLabel[muscleSoreness]}
           className="w-full accent-zinc-900 dark:accent-zinc-100"
         />
@@ -125,6 +134,15 @@ export default function SymptomForm() {
           step={1}
           value={mentalStress}
           onChange={(e) => setMentalStress(Number(e.target.value))}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              setMentalStress(v => Math.min(5, v + 1));
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              setMentalStress(v => Math.max(0, v - 1));
+            }
+          }}
           aria-valuetext={stressLabel[mentalStress]}
           className="w-full accent-zinc-900 dark:accent-zinc-100"
         />
@@ -136,9 +154,9 @@ export default function SymptomForm() {
 
       <button
         type="submit"
-        disabled={isSubmitting || description.trim().length === 0}
+        aria-disabled={isSubmitting || description.trim().length === 0}
         aria-busy={isSubmitting}
-        className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-zinc-900 px-6 text-sm font-semibold text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:self-end dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-zinc-900 px-6 text-sm font-semibold text-white transition-colors hover:bg-zinc-700 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 sm:w-auto sm:self-end dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
       >
         {isSubmitting ? 'Generating plan…' : 'Generate Recovery Plan'}
       </button>

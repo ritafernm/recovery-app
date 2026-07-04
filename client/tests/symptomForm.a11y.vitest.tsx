@@ -69,7 +69,7 @@ describe('Form structure (initial render)', () => {
 
   it('submit button is disabled and labelled when description is empty', () => {
     const btn = screen.getByRole('button', { name: /generate recovery plan/i });
-    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
   });
 });
 
@@ -170,7 +170,7 @@ describe('Successful submission (screen-reader flow)', () => {
     // While in-flight the button text and aria-busy change
     const busyBtn = screen.getByRole('button', { name: /generating plan/i });
     expect(busyBtn).toHaveAttribute('aria-busy', 'true');
-    expect(busyBtn).toBeDisabled();
+    expect(busyBtn).toHaveAttribute('aria-disabled', 'true');
 
     // Resolve to prevent state-update-after-unmount warnings
     resolve({ ok: true, status: 200, json: () => Promise.resolve(minimalPlan) });
