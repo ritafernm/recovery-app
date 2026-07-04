@@ -1,13 +1,16 @@
 import react from '@vitejs/plugin-react';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { defineConfig } from 'vitest/config';
 
 const alias = { '@': path.resolve(__dirname, 'src') };
 
-// Ensure a single copy of React is used across the workspace.
+// Resolve React from wherever npm hoisted it (local or workspace root).
+// Using createRequire ensures this stays correct regardless of deduplication.
+const _require = createRequire(import.meta.url);
 const reactAlias = {
-  react: path.resolve(__dirname, 'node_modules/react'),
-  'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+  react: path.dirname(_require.resolve('react/package.json')),
+  'react-dom': path.dirname(_require.resolve('react-dom/package.json')),
 };
 
 export default defineConfig({
