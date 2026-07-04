@@ -5,8 +5,7 @@ import { usePathname } from "next/navigation";
 
 const NAV_LINKS = [
   { href: "/", label: "Dashboard" },
-  { href: "/recovery-plan", label: "Recovery Plan" },
-  { href: "/logs", label: "Logs" },
+  { href: "/history", label: "Logs" },
 ] as const;
 
 export default function Nav({ authSlot }: { authSlot: React.ReactNode }) {

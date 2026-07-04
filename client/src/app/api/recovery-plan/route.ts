@@ -60,5 +60,71 @@ Return structured JSON that matches the schema exactly.`,
     return NextResponse.json({ error: 'AI returned an invalid recovery plan. Please try again.' }, { status: 502 });
   }
 
-  return NextResponse.json(validated.data);
+  const plan = validated.data;
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_ANON_KEY;
+
+  if (supabaseUrl && supabaseKey) {
+    try {
+      // Save the plan to recovery_plans
+      const dbRes = await fetch(`${supabaseUrl}/rest/v1/recovery_plans`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+          Prefer: 'return=representation',
+        },
+        body: JSON.stringify([{ name: plan.name, plan_data: plan }]),
+      });
+
+      if (!dbRes.ok) {
+        console.error('Failed to save recovery plan to database:', dbRes.status, await dbRes.text());
+      } else {
+        const savedData = await dbRes.json();
+        const [savedPlan] = Array.isArray(savedData) ? savedData : [savedData];
+
+        if (savedPlan?.id) {
+          // Decode the user's JWT to get their user ID
+          const userToken = req.cookies.get('session_token')?.value;
+          let userId: string | null = null;
+          if (userToken) {
+            try {
+              const [, payloadB64] = userToken.split('.');
+              const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8')) as Record<string, unknown>;
+              userId = typeof payload.sub === 'string' ? payload.sub : null;
+            } catch {
+              console.warn('Could not decode session token to extract user ID.');
+            }
+          }
+
+          if (userId && userToken) {
+            // Create a log entry with no user_status (not done yet)
+            const logRes = await fetch(`${supabaseUrl}/rest/v1/recovery_plan_logs`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                apikey: supabaseKey,
+                Authorization: `Bearer ${userToken}`,
+                Prefer: 'return=representation',
+              },
+              body: JSON.stringify([{ plan_id: savedPlan.id, user_id: userId }]),
+            });
+            if (!logRes.ok) {
+              console.error('Failed to create recovery plan log:', logRes.status, await logRes.text());
+            }
+          } else {
+            console.warn('No authenticated user — skipping log creation.');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error persisting recovery plan:', err);
+    }
+  } else {
+    console.warn('SUPABASE_URL or Supabase key not configured — recovery plan not persisted.');
+  }
+
+  return NextResponse.json(plan);
 }

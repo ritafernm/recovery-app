@@ -32,7 +32,8 @@ async function getLogs(token: string, userId: string): Promise<Log[]> {
     },
   );
   if (!res.ok) throw new Error(`Failed to fetch logs: ${res.status}`);
-  return res.json() as Promise<Log[]>;
+  const data = await res.json() as { logs: Log[] };
+  return data.logs;
 }
 
 async function markDone(logId: string) {
