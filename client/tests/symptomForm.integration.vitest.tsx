@@ -138,12 +138,12 @@ describe('SymptomForm — successful plan fetch', () => {
 // ---------------------------------------------------------------------------
 describe('SymptomForm — loading state', () => {
   it('disables the submit button and shows aria-busy while in flight', async () => {
-    let resolve!: (value: ReturnType<typeof HttpResponse.json>) => void;
+    let resolve!: (value: Response) => void;
 
     server.use(
       http.post('/api/recovery-plan', () =>
         new Promise((r) => {
-          resolve = () => r(HttpResponse.json(recoveryPlan));
+          resolve = (res) => r(res);
         }),
       ),
     );

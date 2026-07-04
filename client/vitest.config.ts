@@ -14,12 +14,10 @@ const reactAlias = {
 };
 
 export default defineConfig({
-  plugins: [react()],
   resolve: { alias, dedupe: ['react', 'react-dom'] },
   test: {
     projects: [
       {
-        plugins: [react()],
         resolve: { alias: { ...alias, ...reactAlias }, dedupe: ['react', 'react-dom'] },
         test: {
           name: 'browser',
