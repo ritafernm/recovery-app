@@ -1,4 +1,4 @@
-type Category = 'physical' | 'mental' | 'biophysical';
+export type Category = 'physical' | 'mental' | 'biophysical';
 
 export interface CardProps {
   name: string;
@@ -11,11 +11,62 @@ export interface CardProps {
   tags?: string[];
 }
 
-const categoryStyles: Record<Category, { badge: string }> = {
-  physical:    { badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
-  mental:      { badge: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300' },
-  biophysical: { badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
+export const categoryStyles: Record<Category, { badge: string; dot: string; heading: string }> = {
+  physical: {
+    badge:   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    dot:     'bg-blue-500',
+    heading: 'text-blue-600 dark:text-blue-400',
+  },
+  mental: {
+    badge:   'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+    dot:     'bg-violet-500',
+    heading: 'text-violet-600 dark:text-violet-400',
+  },
+  biophysical: {
+    badge:   'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    dot:     'bg-emerald-500',
+    heading: 'text-emerald-600 dark:text-emerald-400',
+  },
 };
+
+function DifficultyDots({ value }: { value: number }) {
+  return (
+    <span className="flex items-center gap-0.5" aria-label={`Difficulty ${value} of 5`}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <span
+          key={i}
+          className={`size-1.5 rounded-full ${
+            i < value ? 'bg-zinc-600 dark:bg-zinc-300' : 'bg-zinc-200 dark:bg-zinc-700'
+          }`}
+        />
+      ))}
+    </span>
+  );
+}
+
+export interface CategorySectionProps {
+  category: Category;
+  tasks: CardProps[];
+}
+
+export function CategorySection({ category, tasks }: CategorySectionProps) {
+  if (tasks.length === 0) return null;
+  const { heading } = categoryStyles[category];
+  return (
+    <div className="flex flex-col gap-3">
+      <h4 className={`text-sm font-semibold uppercase tracking-widest ${heading}`}>
+        {category}
+      </h4>
+      <ul className="flex flex-col gap-3">
+        {tasks.map((task) => (
+          <li key={`${task.category}-${task.name}`}>
+            <Card {...task} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default function Card({
   name,
@@ -71,12 +122,8 @@ export default function Card({
             </span>
           )}
           {difficulty != null && (
-            <span className="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-3.5" aria-hidden="true">
-                <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
-                <path fillRule="evenodd" d="M1.38 8.28a.87.87 0 0 1 0-.566 7.003 7.003 0 0 1 13.238.006.87.87 0 0 1 0 .566A7.003 7.003 0 0 1 1.379 8.28ZM11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" clipRule="evenodd" />
-              </svg>
-              Difficulty {difficulty}/5
+            <span className="flex items-center gap-1.5">
+              <DifficultyDots value={difficulty} />
             </span>
           )}
         </div>

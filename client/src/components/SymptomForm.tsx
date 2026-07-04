@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { RecoveryPlan } from '@/lib/schema';
-import Card from '@/components/Card';
+import { CategorySection } from '@/components/Card';
 
 type ErrorKind = 'rate-limit' | 'server-error' | 'general';
 interface AppError { kind: ErrorKind; message: string; }
@@ -50,6 +50,8 @@ export default function SymptomForm() {
     e.preventDefault();
     submit();
   }
+
+  const totalMinutes = plan?.tasks.reduce((sum, t) => sum + (t.durationMinutes ?? 0), 0) ?? 0;
 
   return (
     <form
@@ -166,36 +168,16 @@ export default function SymptomForm() {
         <section className="flex flex-col gap-6 pt-2">
           <div>
             <h3 className="text-lg font-semibold tracking-tight">{plan.name}</h3>
-            <p className="text-sm text-zinc-500">~{plan.estimatedMinutes} min total</p>
+            <p className="text-sm text-zinc-500">~{totalMinutes} min total</p>
           </div>
 
-          {(['physical', 'mental', 'biophysical'] as const).map((cat) => {
-            const tasks = plan.tasks.filter((t) => t.category === cat);
-            if (tasks.length === 0) return null;
-            return (
-              <div key={cat} className="flex flex-col gap-3">
-                <h4 className="text-sm font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-                  {cat}
-                </h4>
-                <ul className="flex flex-col gap-3">
-                  {tasks.map((task, i) => (
-                    <li key={i}>
-                      <Card
-                        name={task.name}
-                        category={task.category}
-                        durationMinutes={task.durationMinutes}
-                        reps={task.reps}
-                        tip={task.tip}
-                        difficulty={task.difficulty}
-                        isRequired={task.isRequired}
-                        tags={task.tags}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
+          {(['physical', 'mental', 'biophysical'] as const).map((cat) => (
+            <CategorySection
+              key={cat}
+              category={cat}
+              tasks={plan.tasks.filter((t) => t.category === cat)}
+            />
+          ))}
         </section>
       )}
     </form>
