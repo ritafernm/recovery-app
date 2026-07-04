@@ -53,7 +53,7 @@ export function CategorySection({ category, tasks }: CategorySectionProps) {
   if (tasks.length === 0) return null;
   const { heading } = categoryStyles[category];
   return (
-    <div className="flex flex-col gap-3">
+    <section aria-label={`${category} tasks`} className="flex flex-col gap-3">
       <h4 className={`text-sm font-semibold uppercase tracking-widest ${heading}`}>
         {category}
       </h4>
@@ -64,7 +64,7 @@ export function CategorySection({ category, tasks }: CategorySectionProps) {
           </li>
         ))}
       </ul>
-    </div>
+    </section>
   );
 }
 

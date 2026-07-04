@@ -51,23 +51,27 @@ export default function SymptomForm() {
     submit();
   }
 
+  const soreLabel = ['None', 'Mild', 'Moderate', 'Significant', 'Severe', 'Maximum'];
+  const stressLabel = ['None', 'Low', 'Moderate', 'High', 'Severe', 'Overwhelming'];
+
   const totalMinutes = plan?.tasks.reduce((sum, t) => sum + (t.durationMinutes ?? 0), 0) ?? 0;
 
   return (
     <form
       onSubmit={handleSubmit}
+      aria-describedby="symptom-form-desc"
       className="flex flex-col gap-6 rounded-2xl border border-black/[.08] bg-white p-8 shadow-sm dark:border-white/[.1] dark:bg-zinc-900"
     >
       <div className="flex flex-col gap-1">
         <h2 className="text-xl text-zinc-500 font-semibold tracking-tight">How are you feeling?</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p id="symptom-form-desc" className="text-sm text-zinc-500 dark:text-zinc-400">
           Describe your symptoms and we&apos;ll build a personalised recovery plan.
         </p>
       </div>
 
       {/* Symptom description */}
       <div className="flex flex-col gap-2">
-        <label htmlFor="description" className="text-sm text-zinc-500 font-medium">
+        <label htmlFor="description" className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>
           Describe your symptoms
         </label>
         <textarea
@@ -84,7 +88,7 @@ export default function SymptomForm() {
 
       {/* Physical soreness */}
       <div className="flex flex-col gap-2">
-        <label htmlFor="muscleSoreness" className="flex justify-between text-sm text-zinc-500 font-medium">
+        <label htmlFor="muscleSoreness" className="flex justify-between text-sm font-medium" style={{ color: 'var(--color-label)' }}>
           <span>Muscle soreness</span>
           <span className="tabular-nums">{muscleSoreness}&nbsp;/ 5</span>
         </label>
@@ -97,6 +101,7 @@ export default function SymptomForm() {
           step={1}
           value={muscleSoreness}
           onChange={(e) => setmuscleSoreness(Number(e.target.value))}
+          aria-valuetext={soreLabel[muscleSoreness]}
           className="w-full accent-zinc-900 dark:accent-zinc-100"
         />
         <div className="flex justify-between text-xs text-zinc-400">
@@ -107,7 +112,7 @@ export default function SymptomForm() {
 
       {/* Mental stress */}
       <div className="flex flex-col gap-2">
-        <label htmlFor="mentalStress" className="flex justify-between text-sm text-zinc-500 font-medium">
+        <label htmlFor="mentalStress" className="flex justify-between text-sm font-medium" style={{ color: 'var(--color-label)' }}>
           <span>Mental stress</span>
           <span className="tabular-nums">{mentalStress}&nbsp;/ 5</span>
         </label>
@@ -120,6 +125,7 @@ export default function SymptomForm() {
           step={1}
           value={mentalStress}
           onChange={(e) => setMentalStress(Number(e.target.value))}
+          aria-valuetext={stressLabel[mentalStress]}
           className="w-full accent-zinc-900 dark:accent-zinc-100"
         />
         <div className="flex justify-between text-xs text-zinc-400">
@@ -165,7 +171,7 @@ export default function SymptomForm() {
       )}
 
       {plan && (
-        <section className="flex flex-col gap-6 pt-2">
+        <section aria-label="Your recovery plan" aria-live="polite" className="flex flex-col gap-6 pt-2">
           <div>
             <h3 className="text-lg font-semibold tracking-tight">{plan.name}</h3>
             <p className="text-sm text-zinc-500">~{totalMinutes} min total</p>

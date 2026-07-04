@@ -14,7 +14,7 @@ export default function Nav({ authSlot }: { authSlot: React.ReactNode }) {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-nav)]">
-      <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-6 px-4 sm:px-6">
+      <nav aria-label="Main navigation" className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-6 px-4 sm:px-6">
         {/* Logo / Brand */}
         <Link
           href="/"
@@ -64,7 +64,7 @@ export default function Nav({ authSlot }: { authSlot: React.ReactNode }) {
       </nav>
 
       {/* Mobile nav — shown below sm breakpoint */}
-      <div className="flex items-center gap-1 overflow-x-auto px-4 pb-2 sm:hidden">
+      <nav aria-label="Mobile navigation" className="flex items-center gap-1 overflow-x-auto px-4 pb-2 sm:hidden">
         {NAV_LINKS.map(({ href, label }) => {
           const active =
             href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -84,7 +84,7 @@ export default function Nav({ authSlot }: { authSlot: React.ReactNode }) {
             </Link>
           );
         })}
-      </div>
+      </nav>
     </header>
   );
 }

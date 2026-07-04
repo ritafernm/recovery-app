@@ -32,8 +32,15 @@ export default function RootLayout({
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-[var(--color-surface)] text-[var(--color-text-primary)]">
+        {/* Skip link for accessibility */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-[var(--color-primary-600)] focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
+        >
+          Skip to main content
+        </a>
         <Nav authSlot={<NavAuth />} />
-        <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 sm:px-6">
+        <main id="main-content" className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 sm:px-6">
           {children}
         </main>
       </body>

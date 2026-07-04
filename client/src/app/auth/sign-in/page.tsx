@@ -22,7 +22,7 @@ export default function SignInPage() {
       </div>
 
       {justSignedUp && (
-        <div className="mb-4 rounded-[var(--radius-md)] bg-teal-50 px-4 py-3 text-sm text-teal-800 dark:bg-teal-950 dark:text-teal-200">
+        <div role="status" className="mb-4 rounded-[var(--radius-md)] bg-teal-50 px-4 py-3 text-sm text-teal-800 dark:bg-teal-950 dark:text-teal-200">
           Account created! Check your email to confirm, then sign in.
         </div>
       )}

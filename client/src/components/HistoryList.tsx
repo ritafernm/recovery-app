@@ -39,6 +39,7 @@ export function HistoryList({ logs, onMarkDone }: Props) {
             <button
               type="button"
               onClick={() => onMarkDone(log.id)}
+              aria-label={`Mark plan logged on ${new Date(log.created_at).toLocaleDateString()} as done`}
               className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-teal-700"
             >
               Mark done
