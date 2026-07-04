@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { RecoveryPlan } from '@/lib/schema';
+import Card from '@/components/Card';
 
 type ErrorKind = 'rate-limit' | 'server-error' | 'general';
 interface AppError { kind: ErrorKind; message: string; }
@@ -162,29 +163,39 @@ export default function SymptomForm() {
       )}
 
       {plan && (
-        <section className="flex flex-col gap-4 pt-2">
+        <section className="flex flex-col gap-6 pt-2">
           <div>
             <h3 className="text-lg font-semibold tracking-tight">{plan.name}</h3>
             <p className="text-sm text-zinc-500">~{plan.estimatedMinutes} min total</p>
           </div>
-          <ul className="flex flex-col gap-3">
-            {plan.tasks.map((task, i) => (
-              <li key={i} className="rounded-xl border border-black/[.08] p-4 dark:border-white/[.1]">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{task.name}</span>
-                  <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 capitalize">
-                    {task.category}
-                  </span>
-                </div>
-                {task.tip && <p className="mt-1 text-sm text-zinc-500">{task.tip}</p>}
-                <div className="mt-1 flex gap-3 text-xs text-zinc-400">
-                  {task.durationMinutes != null && <span>{task.durationMinutes} min</span>}
-                  {task.reps != null && <span>{task.reps} reps</span>}
-                  {task.difficulty != null && <span>Difficulty {task.difficulty}/5</span>}
-                </div>
-              </li>
-            ))}
-          </ul>
+
+          {(['physical', 'mental', 'biophysical'] as const).map((cat) => {
+            const tasks = plan.tasks.filter((t) => t.category === cat);
+            if (tasks.length === 0) return null;
+            return (
+              <div key={cat} className="flex flex-col gap-3">
+                <h4 className="text-sm font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+                  {cat}
+                </h4>
+                <ul className="flex flex-col gap-3">
+                  {tasks.map((task, i) => (
+                    <li key={i}>
+                      <Card
+                        name={task.name}
+                        category={task.category}
+                        durationMinutes={task.durationMinutes}
+                        reps={task.reps}
+                        tip={task.tip}
+                        difficulty={task.difficulty}
+                        isRequired={task.isRequired}
+                        tags={task.tags}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </section>
       )}
     </form>
