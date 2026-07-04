@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description: 'View your past recovery plan logs and mark them as done.',
 };
 
+// Always fetch fresh data — never serve a cached response for user logs.
+export const dynamic = 'force-dynamic';
+
 const API_URL = process.env.API_URL ?? 'http://localhost:5000';
 
 type Log = {

@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: 'Describe how you are feeling and get a personalised recovery plan based on your muscle soreness and mental stress.',
 };
 
+// No user-specific data — build once and serve from the CDN edge.
+export const dynamic = 'force-static';
+
 export default function Home() {
   //await new Promise((r) => setTimeout(r,8000)); // loading test
   return (
