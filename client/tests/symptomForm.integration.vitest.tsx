@@ -157,7 +157,7 @@ describe('SymptomForm — loading state', () => {
     expect(busyBtn).toHaveAttribute('aria-busy', 'true');
     expect(busyBtn).toBeDisabled();
 
-    resolve();
+    resolve(HttpResponse.json(recoveryPlan));
     await screen.findByText('Full Recovery');
   });
 });
