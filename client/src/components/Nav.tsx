@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import NavAuth from "@/components/NavAuth";
 
 const NAV_LINKS = [
   { href: "/", label: "Dashboard" },
@@ -10,7 +9,7 @@ const NAV_LINKS = [
   { href: "/logs", label: "Logs" },
 ] as const;
 
-export default function Nav() {
+export default function Nav({ authSlot }: { authSlot: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
@@ -60,7 +59,7 @@ export default function Nav() {
 
         {/* Auth action */}
         <div className="flex items-center gap-3">
-          <NavAuth />
+          {authSlot}
         </div>
       </nav>
 
