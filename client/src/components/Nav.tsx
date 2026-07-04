@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import NavAuth from "@/components/NavAuth";
 
 const NAV_LINKS = [
   { href: "/", label: "Dashboard" },
@@ -57,14 +58,9 @@ export default function Nav() {
           })}
         </ul>
 
-        {/* Auth action — placeholder; swap with real session logic */}
+        {/* Auth action */}
         <div className="flex items-center gap-3">
-          <Link
-            href="/auth/sign-in"
-            className="rounded-[var(--radius-full)] bg-[var(--color-primary-600)] px-4 py-1.5 text-sm font-medium text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-primary-700)]"
-          >
-            Sign in
-          </Link>
+          <NavAuth />
         </div>
       </nav>
 
