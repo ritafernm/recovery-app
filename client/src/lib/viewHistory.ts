@@ -1,4 +1,6 @@
-const API_URL: string = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
+const API_URL: string =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:5000');
 
 export type Log = {
   id: string;

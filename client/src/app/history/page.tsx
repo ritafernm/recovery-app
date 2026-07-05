@@ -12,7 +12,9 @@ export const metadata: Metadata = {
 // Always fetch fresh data — never serve a cached response for user logs.
 export const dynamic = 'force-dynamic';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:5000';
+const API_URL =
+  process.env.API_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api` : 'http://localhost:5000');
 
 type Log = {
   id: string;
