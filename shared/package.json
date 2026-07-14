@@ -4,8 +4,8 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/schema.d.ts",
-      "import": "./dist/schema.js"
+      "types": "./dist/lib/schema.d.ts",
+      "import": "./dist/lib/schema.js"
     }
   },
   "dependencies": {
