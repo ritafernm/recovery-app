@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { RecoveryPlan } from '@/lib/schema';
 import { CategorySection } from '@/components/Card';
 
@@ -14,6 +14,19 @@ export default function SymptomForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [plan, setPlan] = useState<RecoveryPlan | null>(null);
   const [appError, setAppError] = useState<AppError | null>(null);
+
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const planRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    descriptionRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (plan) {
+      planRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [plan]);
 
   async function submit() {
     if (isSubmitting || !description.trim()) return;
@@ -75,6 +88,7 @@ export default function SymptomForm() {
           Describe your symptoms
         </label>
         <textarea
+          ref={descriptionRef}
           id="description"
           name="description"
           required
@@ -189,7 +203,7 @@ export default function SymptomForm() {
       )}
 
       {plan && (
-        <section aria-label="Your recovery plan" aria-live="polite" className="flex flex-col gap-6 pt-2">
+        <section ref={planRef} aria-label="Your recovery plan" aria-live="polite" className="flex flex-col gap-6 pt-2">
           <div>
             <h3 className="text-lg font-semibold tracking-tight">{plan.name}</h3>
             <p className="text-sm text-zinc-500">~{totalMinutes} min total</p>
