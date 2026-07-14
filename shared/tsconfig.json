@@ -8,7 +8,7 @@
     "verbatimModuleSyntax": true,
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": "./lib"
+    "rootDir": "."
   },
   "include": ["lib/**/*.ts"]
 }
