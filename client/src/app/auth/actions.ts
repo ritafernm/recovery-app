@@ -20,41 +20,41 @@ export async function loginAction(
   if (!email || !password) {
     return { error: 'Email and password are required.' };
   }
-  console.log('Using API_URL:', API_URL);
 
-  let data: Record<string, unknown>;
   try {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    data = (await res.json()) as Record<string, unknown>;
 
     if (!res.ok) {
-      return { error: (data.error as string) ?? 'Login failed.' };
+      const errorText = await res.text();
+      console.error('Server responded with error:', errorText);
+      return { error: 'Invalid credentials or server error.' };
     }
+
+    const data = (await res.json()) as Record<string, unknown>;
+
+    const token = data.access_token as string | undefined;
+    if (!token) {
+      return { error: 'Login failed: no token received.' };
+    }
+
+    const cookieStore = await cookies();
+    cookieStore.set('session_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    redirect('/');
   } catch (err) {
-    console.error('Login fetch error:', err);  // this will show up in Vercel function logs
+    console.error('Login fetch error:', err);
     return { error: 'Could not reach the server. Please try again.' };
   }
-
-  const token = data.access_token as string | undefined;
-  if (!token) {
-    return { error: 'Login failed: no token received.' };
-  }
-
-  const cookieStore = await cookies();
-  cookieStore.set('session_token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    // 7 days
-    maxAge: 60 * 60 * 24 * 7,
-  });
-
-  redirect('/');
 }
 
 export async function signupAction(
