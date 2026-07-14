@@ -2,11 +2,10 @@
   "name": "shared",
   "version": "0.0.0",
   "type": "module",
-  "build": "tsc",
   "exports": {
     ".": {
-      "types": "./lib/schema.ts",
-      "default": "./lib/schema.ts"
+      "types": "./dist/schema.d.ts",
+      "import": "./dist/schema.js"
     }
   },
   "dependencies": {
