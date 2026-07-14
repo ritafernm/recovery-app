@@ -14,11 +14,11 @@
     "@ai-sdk/anthropic": "^3.0.92",
     "@ai-sdk/openai": "^4.0.7",
     "ai": "^6.0.213",
-    "next": "16.2.10",
+    "next": "^16.2.10",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "zod": "^4.4.3",
-    "server": "*" 
+    "server": "*",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -3,9 +3,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-const API_URL =
-  process.env.API_URL ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api` : 'http://localhost:5000');
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
 
 export type AuthState = {
   error?: string;
@@ -22,6 +20,7 @@ export async function loginAction(
   if (!email || !password) {
     return { error: 'Email and password are required.' };
   }
+  console.log('Using API_URL:', API_URL);
 
   let data: Record<string, unknown>;
   try {
@@ -35,7 +34,8 @@ export async function loginAction(
     if (!res.ok) {
       return { error: (data.error as string) ?? 'Login failed.' };
     }
-  } catch {
+  } catch (err) {
+    console.error('Login fetch error:', err);  // this will show up in Vercel function logs
     return { error: 'Could not reach the server. Please try again.' };
   }
 

@@ -1,0 +1,8 @@
+{
+  "framework": null,
+  "buildCommand": "npm install && npm run build --workspace=shared && npm run build --workspace=server",
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api" }
+  ]
+}

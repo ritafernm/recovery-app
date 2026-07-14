@@ -1,6 +1,8 @@
-const API_URL: string =
-  process.env.NEXT_PUBLIC_API_URL ??
-  (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:5000');
+const API_URL: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+if (!process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV === 'production') {
+  console.error('⚠️ NEXT_PUBLIC_API_URL is missing in production — API calls will fail');
+}
 
 export type Log = {
   id: string;
