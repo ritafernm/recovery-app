@@ -49,12 +49,12 @@ export async function loginAction(
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
     });
-
-    redirect('/');
   } catch (err) {
     console.error('Login fetch error:', err);
     return { error: 'Could not reach the server. Please try again.' };
   }
+
+  redirect('/');
 }
 
 export async function signupAction(
