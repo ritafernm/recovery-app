@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 export type Session = {
   token: string;
   email: string | null;
+  userId: string | null;
 };
 
 export async function getSession(): Promise<Session | null> {
@@ -16,7 +17,8 @@ export async function getSession(): Promise<Session | null> {
     const json = Buffer.from(payloadB64, 'base64url').toString('utf8');
     const payload = JSON.parse(json) as Record<string, unknown>;
     const email = typeof payload.email === 'string' ? payload.email : null;
-    return { token, email };
+    const userId = typeof payload.sub === 'string' ? payload.sub : null;
+    return { token, email, userId };
   } catch {
     // Malformed token — treat as unauthenticated.
     return null;

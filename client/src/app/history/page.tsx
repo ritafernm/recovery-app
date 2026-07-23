@@ -62,20 +62,9 @@ export default async function HistoryPage() {
   const session = await getSession();
   if (!session) redirect('/auth/sign-in');
 
-  let userId = '';
-  try {
-    const [, payloadB64] = session.token.split('.');
-    const payload = JSON.parse(
-      Buffer.from(payloadB64, 'base64url').toString('utf8'),
-    ) as Record<string, unknown>;
-    if (typeof payload.sub === 'string') userId = payload.sub;
-  } catch {
-    // malformed token — treated as unauthenticated below
-  }
+  if (!session.userId) redirect('/auth/sign-in');
 
-  if (!userId) redirect('/auth/sign-in');
-
-  const logs = await getLogs(session.token, userId);
+  const logs = await getLogs(session.token, session.userId);
 
   return (
     <div className="flex flex-col gap-6">
