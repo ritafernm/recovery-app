@@ -1,5 +1,6 @@
 import { anthropic } from '@ai-sdk/anthropic';
 import { generateObject } from 'ai';
+import { jwtVerify, createRemoteJWKSet } from 'jose';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { RecoveryPlanSchema } from '@/lib/schema';
@@ -45,6 +46,98 @@ function applyRateLimitHeaders(res: NextResponse, entry: RateLimitEntry): void {
   }
 }
 
+// --- Authentication (real JWT verification, mirrors the server's requireAuth) ---
+let jwksCache: ReturnType<typeof createRemoteJWKSet> | null = null;
+
+function getJWKS(supabaseUrl: string): ReturnType<typeof createRemoteJWKSet> {
+  if (!jwksCache) {
+    jwksCache = createRemoteJWKSet(new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`));
+  }
+  return jwksCache;
+}
+
+function getTokenAlgorithm(token: string): string | undefined {
+  try {
+    const part = token.split('.')[0];
+    if (!part) return undefined;
+    return JSON.parse(Buffer.from(part, 'base64url').toString()).alg;
+  } catch {
+    return undefined;
+  }
+}
+
+type AuthResult =
+  | { ok: true; userId: string; token: string }
+  | { ok: false; response: NextResponse };
+
+async function authenticate(req: NextRequest): Promise<AuthResult> {
+  const token = req.cookies.get('session_token')?.value;
+  if (!token) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: 'Unauthorized', message: 'Authentication required.' },
+        { status: 401 }
+      ),
+    };
+  }
+
+  const alg = getTokenAlgorithm(token);
+
+  try {
+    let payload: Awaited<ReturnType<typeof jwtVerify>>['payload'];
+
+    if (alg === 'HS256') {
+      // Symmetric secret — used in tests / local development
+      const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+      if (!jwtSecret) {
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: 'Server configuration error', message: 'Auth service is not configured.' },
+            { status: 500 }
+          ),
+        };
+      }
+      ({ payload } = await jwtVerify(token, new TextEncoder().encode(jwtSecret)));
+    } else {
+      // Asymmetric (ES256, RS256) — verify via Supabase JWKS endpoint
+      const supabaseUrl = process.env.SUPABASE_URL;
+      if (!supabaseUrl) {
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: 'Server configuration error', message: 'Auth service is not configured.' },
+            { status: 500 }
+          ),
+        };
+      }
+      ({ payload } = await jwtVerify(token, getJWKS(supabaseUrl)));
+    }
+
+    const userId = payload.sub;
+    if (!userId) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { error: 'Unauthorized', message: 'Could not identify user from token.' },
+          { status: 401 }
+        ),
+      };
+    }
+
+    return { ok: true, userId, token };
+  } catch {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: 'Unauthorized', message: 'Invalid or expired token.' },
+        { status: 401 }
+      ),
+    };
+  }
+}
+
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
   const entry = getRateLimitEntry(ip);
@@ -69,6 +162,11 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleRequest(req: NextRequest): Promise<NextResponse> {
+  // Reject unauthenticated requests before doing any expensive work (e.g. the Anthropic call).
+  const auth = await authenticate(req);
+  if (!auth.ok) return auth.response;
+  const { userId, token } = auth;
+
   let body: unknown;
   try {
     body = await req.json();
@@ -144,36 +242,19 @@ Return structured JSON that matches the schema exactly.`,
         const [savedPlan] = Array.isArray(savedData) ? savedData : [savedData];
 
         if (savedPlan?.id) {
-          // Decode the user's JWT to get their user ID
-          const userToken = req.cookies.get('session_token')?.value;
-          let userId: string | null = null;
-          if (userToken) {
-            try {
-              const [, payloadB64] = userToken.split('.');
-              const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8')) as Record<string, unknown>;
-              userId = typeof payload.sub === 'string' ? payload.sub : null;
-            } catch {
-              console.warn('Could not decode session token to extract user ID.');
-            }
-          }
-
-          if (userId && userToken) {
-            // Create a log entry with no user_status (not done yet)
-            const logRes = await fetch(`${supabaseUrl}/rest/v1/recovery_plan_logs`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                apikey: supabaseKey,
-                Authorization: `Bearer ${userToken}`,
-                Prefer: 'return=representation',
-              },
-              body: JSON.stringify([{ plan_id: savedPlan.id, user_id: userId }]),
-            });
-            if (!logRes.ok) {
-              console.error('Failed to create recovery plan log:', logRes.status, await logRes.text());
-            }
-          } else {
-            console.warn('No authenticated user — skipping log creation.');
+          // Create a log entry with no user_status (not done yet) for the authenticated user.
+          const logRes = await fetch(`${supabaseUrl}/rest/v1/recovery_plan_logs`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: supabaseKey,
+              Authorization: `Bearer ${token}`,
+              Prefer: 'return=representation',
+            },
+            body: JSON.stringify([{ plan_id: savedPlan.id, user_id: userId }]),
+          });
+          if (!logRes.ok) {
+            console.error('Failed to create recovery plan log:', logRes.status, await logRes.text());
           }
         }
       }
