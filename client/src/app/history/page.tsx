@@ -24,9 +24,9 @@ type Log = {
   created_at: string;
 };
 
-async function getLogs(token: string, userId: string): Promise<Log[]> {
+async function getLogs(token: string): Promise<Log[]> {
   const res = await fetch(
-    `${API_URL}/logs?userId=${encodeURIComponent(userId)}`,
+    `${API_URL}/logs`,
     {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
@@ -62,9 +62,7 @@ export default async function HistoryPage() {
   const session = await getSession();
   if (!session) redirect('/auth/sign-in');
 
-  if (!session.userId) redirect('/auth/sign-in');
-
-  const logs = await getLogs(session.token, session.userId);
+  const logs = await getLogs(session.token);
 
   return (
     <div className="flex flex-col gap-6">
