@@ -1,6 +1,13 @@
 'use client';
 
-import type { Log } from '@/lib/viewHistory';
+export type Log = {
+  id: string;
+  plan_id: string;
+  user_id: string;
+  user_status: string | null;
+  completed_at: string | null;
+  created_at: string;
+};
 
 interface Props {
   logs: Log[];

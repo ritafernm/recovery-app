@@ -3,8 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import HistoryError from '../src/app/history/error';
 import HistoryLoading from '../src/app/history/loading';
-import { HistoryList } from '../src/components/HistoryList';
-import type { Log } from '../src/lib/viewHistory';
+import { HistoryList, type Log } from '../src/components/HistoryList';
 
 afterEach(cleanup);
 
