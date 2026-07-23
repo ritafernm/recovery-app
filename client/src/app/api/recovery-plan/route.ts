@@ -219,17 +219,19 @@ Return structured JSON that matches the schema exactly.`,
   const plan = validated.data;
 
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_ANON_KEY;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-  if (supabaseUrl && supabaseKey) {
+  if (supabaseUrl && supabaseAnonKey) {
     try {
-      // Save the plan to recovery_plans
+      // Save the plan to recovery_plans.
+      // Authorize as the end user (their JWT) so Row Level Security stays enforced.
+      // The anon key is only the gateway apikey — it does NOT grant elevated access.
       const dbRes = await fetch(`${supabaseUrl}/rest/v1/recovery_plans`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${token}`,
           Prefer: 'return=representation',
         },
         body: JSON.stringify([{ name: plan.name, plan_data: plan }]),
@@ -247,7 +249,7 @@ Return structured JSON that matches the schema exactly.`,
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              apikey: supabaseKey,
+              apikey: supabaseAnonKey,
               Authorization: `Bearer ${token}`,
               Prefer: 'return=representation',
             },
@@ -262,7 +264,7 @@ Return structured JSON that matches the schema exactly.`,
       console.error('Error persisting recovery plan:', err);
     }
   } else {
-    console.warn('SUPABASE_URL or Supabase key not configured — recovery plan not persisted.');
+    console.warn('SUPABASE_URL or SUPABASE_ANON_KEY not configured — recovery plan not persisted.');
   }
 
   return NextResponse.json(plan);
