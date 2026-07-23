@@ -15,12 +15,7 @@ export default function SymptomForm() {
   const [plan, setPlan] = useState<RecoveryPlan | null>(null);
   const [appError, setAppError] = useState<AppError | null>(null);
 
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const planRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    descriptionRef.current?.focus();
-  }, []);
 
   useEffect(() => {
     if (plan) {
@@ -71,6 +66,8 @@ export default function SymptomForm() {
 
   return (
     <form
+      id="symptom-form"
+      tabIndex={-1}
       onSubmit={handleSubmit}
       aria-describedby="symptom-form-desc"
       className="flex flex-col gap-6 rounded-2xl border border-black/[.08] bg-white p-4 shadow-sm sm:p-8 dark:border-white/[.1] dark:bg-zinc-900"
@@ -88,7 +85,6 @@ export default function SymptomForm() {
           Describe your symptoms
         </label>
         <textarea
-          ref={descriptionRef}
           id="description"
           name="description"
           required
