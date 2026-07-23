@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import type { RecoveryPlan } from '@/lib/schema';
+import type { RecoveryPlan } from 'shared';
 import { CategorySection } from '@/components/Card';
 
 type ErrorKind = 'rate-limit' | 'server-error' | 'general';

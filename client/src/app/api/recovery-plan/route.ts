@@ -3,7 +3,7 @@ import { generateObject } from 'ai';
 import { jwtVerify, createRemoteJWKSet } from 'jose';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { RecoveryPlanSchema } from '@/lib/schema';
+import { RecoveryPlanSchema } from 'shared';
 
 const RequestSchema = z.object({
   description: z.string().min(1),

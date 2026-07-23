@@ -3,7 +3,7 @@
  **/
 
 import { describe, expect, it } from 'vitest';
-import { RecoveryPlanSchema } from '../src/lib/schema';
+import { RecoveryPlanSchema } from 'shared';
 
 // ---------------------------------------------------------------------------
 // Fixtures
