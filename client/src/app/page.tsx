@@ -11,7 +11,6 @@ export const metadata: Metadata = {
 export const dynamic = 'force-static';
 
 export default function Home() {
-  //await new Promise((r) => setTimeout(r,8000)); // loading test
   return (
     <div className="flex flex-col gap-6">
       <a
