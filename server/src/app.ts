@@ -23,7 +23,7 @@ function loadServerEnv() {
 loadServerEnv();
 
 const HOST = process.env.HOST || '0.0.0.0';
-const PORT = Number(process.env.PORT || 5000);
+const PORT = Number(process.env.PORT || 5050);
 
 export function createApp() {
   const app = express();

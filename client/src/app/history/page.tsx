@@ -12,7 +12,8 @@ export const metadata: Metadata = {
 // Always fetch fresh data — never serve a cached response for user logs.
 export const dynamic = 'force-dynamic';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+if (!API_URL) throw new Error('NEXT_PUBLIC_API_URL is not set');
 
 type Log = {
   id: string;
