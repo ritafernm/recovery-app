@@ -4,11 +4,14 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./lib/schema.ts",
-      "default": "./lib/schema.ts"
+      "types": "./dist/lib/schema.d.ts",
+      "import": "./dist/lib/schema.js"
     }
   },
   "dependencies": {
     "zod": "^4.4.3"
+  },
+  "scripts": {
+    "build": "tsc"
   }
 }

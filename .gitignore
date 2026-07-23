@@ -26,3 +26,4 @@ server/dist/
 # Prisma & DB logs
 /prisma/migrations/
 *.log
+.vercel
