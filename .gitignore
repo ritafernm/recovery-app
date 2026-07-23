@@ -27,4 +27,3 @@ server/dist/
 /prisma/migrations/
 *.log
 .vercel
-.env*
