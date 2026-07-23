@@ -33,7 +33,7 @@ describe('viewHistory', () => {
   it('should return a list of history logs', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve(mockHistory),
+      json: () => Promise.resolve({ logs: mockHistory }),
     } as Response);
 
     const result = await viewHistory('mock-token', 'user-abc');

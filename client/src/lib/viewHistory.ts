@@ -22,7 +22,8 @@ export async function viewHistory(token: string, userId: string): Promise<Log[]>
     },
   );
   if (!res.ok) throw new Error(`Failed to fetch logs: ${res.status}`);
-  return res.json() as Promise<Log[]>;
+  const body = (await res.json()) as { logs: Log[] };
+  return body.logs;
 }
 
 export function withMarkDone(logs: Log[], logId: string): Log[] {
