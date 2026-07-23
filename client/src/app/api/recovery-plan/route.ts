@@ -10,7 +10,65 @@ const RequestSchema = z.object({
   mentalStress: z.number().int().min(0).max(5),
 });
 
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const RATE_LIMIT_MAX = 5;
+const COUNTABLE_STATUSES = new Set([200, 201, 401, 500, 502, 503, 504]);
+
+type RateLimitEntry = { count: number; resetAt: number };
+const rateLimitStore = new Map<string, RateLimitEntry>();
+
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0]!.trim();
+  return req.headers.get('x-real-ip')?.trim() || 'unknown';
+}
+
+function getRateLimitEntry(ip: string): RateLimitEntry {
+  const now = Date.now();
+  const existing = rateLimitStore.get(ip);
+  if (!existing || existing.resetAt <= now) {
+    const fresh: RateLimitEntry = { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+    rateLimitStore.set(ip, fresh);
+    return fresh;
+  }
+  return existing;
+}
+
+function applyRateLimitHeaders(res: NextResponse, entry: RateLimitEntry): void {
+  const remaining = Math.max(0, RATE_LIMIT_MAX - entry.count);
+  const resetSeconds = Math.max(0, Math.ceil((entry.resetAt - Date.now()) / 1000));
+  res.headers.set('RateLimit-Limit', String(RATE_LIMIT_MAX));
+  res.headers.set('RateLimit-Remaining', String(remaining));
+  res.headers.set('RateLimit-Reset', String(resetSeconds));
+  if (res.status === 429) {
+    res.headers.set('Retry-After', String(resetSeconds));
+  }
+}
+
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  const entry = getRateLimitEntry(ip);
+
+  if (entry.count >= RATE_LIMIT_MAX) {
+    const res = NextResponse.json(
+      { error: 'Too Many Requests', message: 'Rate limit exceeded. Please try again later.' },
+      { status: 429 }
+    );
+    applyRateLimitHeaders(res, entry);
+    return res;
+  }
+
+  const res = await handleRequest(req);
+
+  // Only count requests that resulted in a "successful" status (skipFailedRequests).
+  if (COUNTABLE_STATUSES.has(res.status)) {
+    entry.count += 1;
+  }
+  applyRateLimitHeaders(res, entry);
+  return res;
+}
+
+async function handleRequest(req: NextRequest): Promise<NextResponse> {
   let body: unknown;
   try {
     body = await req.json();

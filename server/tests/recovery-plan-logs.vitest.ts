@@ -7,11 +7,6 @@ const { mockMarkLogDone, mockGetUserLogs, mockRequireAuth } = vi.hoisted(() => (
   mockRequireAuth: vi.fn(),
 }));
 
-vi.mock('../src/recovery-plan.js', () => ({
-  generateRecoveryPlan: vi.fn(),
-  saveRecoveryPlan: vi.fn(),
-}));
-
 vi.mock('../src/recovery-plan-logs.js', () => ({
   markLogDone: mockMarkLogDone,
   getUserLogs: mockGetUserLogs,
